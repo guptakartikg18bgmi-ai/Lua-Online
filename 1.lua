@@ -1,5 +1,5 @@
 -- ============================================================================
--- ✦ GOKU FRAMEWORK + PVT 18-LAYER BYPASS [MASTER BUILD - FINAL FIX] ✦
+-- ✦ GOKU FRAMEWORK + PVT 18-LAYER BYPASS [MASTER BUILD - FINAL SYNC] ✦
 -- ============================================================================
 
 if not _G.GOKU_ONE_TIME_INIT_DONE then
@@ -504,7 +504,7 @@ pcall(function() if type(enemy.IsDead) == "function" then isDead = enemy:IsDead(
 if not isDead then if not enemy.bHasAKNativeMapMarker then createDistanceMarker(enemy); enemy.bHasAKNativeMapMarker = true end else if enemy.bHasAKNativeMapMarker then removeDistanceMarker(enemy); enemy.bHasAKNativeMapMarker = false end end
 end
 
--- [FIXED VEHICLE ESP BLINKING: Timer 0.45s, Duration 1.0s]
+-- [FIXED VEHICLE ESP: 1.0s Timer + 2.0s Duration for 0% Blinking]
 local function VehicleESPLoop()
 if not _G.MOD_VehicleESP then return end
 local pc = slua_GameFrontendHUD:GetPlayerController(); if not isValid(pc) then return end
@@ -515,7 +515,11 @@ if not _G._VehicleCacheTime or os.clock() - _G._VehicleCacheTime > 1.0 then _G._
 for _, vehicle in pairs(_G._VehicleCache) do
 if isValid(vehicle) then
 local vPos = vehicle:K2_GetActorLocation(); local dx = vPos.X - myPos.X; local dy = vPos.Y - myPos.Y; local dz = vPos.Z - myPos.Z; local distSq = dx * dx + dy * dy + dz * dz
-if distSq < 900000000 then local dist = math.sqrt(distSq); local distText = string.format("[%.0fm]", dist / 100); HUD:AddDebugText("Vehicle " .. distText, vehicle, 1.0, { X = 0, Y = 0, Z = 100 }, { X = 0, Y = 0, Z = 100 }, { R = 255, G = 255, B = 0, A = 255 }, true, false, true, nil, 1.0, true) end
+if distSq < 900000000 then 
+    local dist = math.sqrt(distSq); 
+    local distText = string.format("[%.0fm]", dist / 100); 
+    HUD:AddDebugText("Vehicle " .. distText, vehicle, 2.0, { X = 0, Y = 0, Z = 100 }, { X = 0, Y = 0, Z = 100 }, { R = 255, G = 255, B = 0, A = 255 }, true, false, true, nil, 1.0, true) 
+end
 end
 end
 end
@@ -616,7 +620,6 @@ end
 local aimOriginalCache = setmetatable({}, { __mode = "k" })
 local AIM_BASE_VALUES = { Speed = 8.1, RangeRate = 1.8, SpeedRate = 2.5, RangeRateSight = 5.5, SpeedRateSight = 1.4, CrouchRate = 1.2, ProneRate = 1.1, DyingRate = 0 }
 
--- [FIXED AIM ASSIST TOGGLE BUG: Restores original values when turned OFF]
 local function ApplyAimAssist()
 pcall(function()
 local pc = slua_GameFrontendHUD:GetPlayerController(); if not isValid(pc) then return end
@@ -650,7 +653,6 @@ local RECOIL_TARGET_VALUES = { RecoilKick = 0.18, RecoilKickADS = 0.14, Animatio
 local RECOIL_INFO_FIELDS = {"VerticalRecoilMin", "VerticalRecoilMax", "RecoilSpeedVertical", "RecoilSpeedHorizontal", "VerticalRecoveryMax"}
 local RECOIL_INFO_TARGET = { VerticalRecoilMin = 0.3, VerticalRecoilMax = 0.4, RecoilSpeedVertical = 0.2, RecoilSpeedHorizontal = 0.4, VerticalRecoveryMax = 0.1 }
 
--- [FIXED NO RECOIL TOGGLE BUG: Restores original values when turned OFF]
 local function ApplyNoRecoil()
 pcall(function()
 local pc = slua_GameFrontendHUD:GetPlayerController(); if not isValid(pc) then return end
@@ -684,7 +686,6 @@ end
 
 local ipadViewOrigCache = setmetatable({}, { __mode = "k" })
 
--- [FIXED IPAD VIEW TOGGLE BUG: Restores original FOV when turned OFF]
 local function ApplyiPadView()
 pcall(function()
 local pc = slua_GameFrontendHUD:GetPlayerController(); if not isValid(pc) then return end
@@ -704,32 +705,36 @@ if GameplayData then
 local COLOR_SAFE = { R = 0, G = 255, B = 200, A = 255 }; local COLOR_WARN = { R = 255, G = 150, B = 0, A = 255 }; local COLOR_DANGER = { R = 255, G = 20, B = 60, A = 255 }
 local TEXT_OFFSET = { X = 0, Y = 0, Z = 35 }; local TEXT_SCALE = 1.05; local MAX_DIST_SQ = 900000000
 
--- [MERGED WATERMARK & ENEMY COUNTER: Saves 1 Draw Call, Better Performance]
+-- [FIXED WATERMARK SYNC: Watermark ONLY shows if Enemy Counter is ON]
 function LocalPlayerUILoop()
 pcall(function()
-if not (_G.MOD_EnemyCounterEnabled or _G.MOD_Watermark_Enabled) then return end
+-- Agar Enemy Counter OFF hai, toh Watermark bhi OFF rahega (0% Lag, 0 Draw Calls)
+if not _G.MOD_EnemyCounterEnabled then return end
+
 local player = GameplayData.GetPlayerCharacter(); if not isValid(player) then return end
 local pc = slua_GameFrontendHUD:GetPlayerController(); if not isValid(pc) then return end
 local hud = pc:GetHUD(); if not isValid(hud) then return end
 
 local myTeamId = player.TeamID or 0; local myPos = player:K2_GetActorLocation(); local enemyCount = 0; 
-if _G.MOD_EnemyCounterEnabled then
-    local allPawns = Game:GetAllPlayerPawns() or {}
-    for _, pawn in pairs(allPawns) do if isValid(pawn) and pawn ~= player and (pawn.TeamID or 0) ~= myTeamId then local pos = pawn:K2_GetActorLocation(); local dx = pos.X - myPos.X; local dy = pos.Y - myPos.Y; local dz = pos.Z - myPos.Z; if (dx * dx + dy * dy + dz * dz) <= MAX_DIST_SQ then enemyCount = enemyCount + 1 end end end
+local allPawns = Game:GetAllPlayerPawns() or {}
+for _, pawn in pairs(allPawns) do 
+    if isValid(pawn) and pawn ~= player and (pawn.TeamID or 0) ~= myTeamId then 
+        local pos = pawn:K2_GetActorLocation(); 
+        local dx = pos.X - myPos.X; local dy = pos.Y - myPos.Y; local dz = pos.Z - myPos.Z; 
+        if (dx * dx + dy * dy + dz * dz) <= MAX_DIST_SQ then enemyCount = enemyCount + 1 end 
+    end 
 end
 
 local text = ""
 local color = COLOR_SAFE
 
-if _G.MOD_EnemyCounterEnabled then
-    if enemyCount == 0 then text = "[ AREA SECURE ]"; color = COLOR_SAFE 
-    elseif enemyCount == 1 then text = "! WARNING : 1 ENEMY !"; color = COLOR_WARN 
-    else text = "[ DANGER : " .. enemyCount .. " ENEMIES ]"; color = COLOR_DANGER end
-end
+if enemyCount == 0 then text = "[ AREA SECURE ]"; color = COLOR_SAFE 
+elseif enemyCount == 1 then text = "! WARNING : 1 ENEMY !"; color = COLOR_WARN 
+else text = "[ DANGER : " .. enemyCount .. " ENEMIES ]"; color = COLOR_DANGER end
 
+-- Watermark sirf tabhi add hoga jab Enemy Counter ON ho aur Watermark toggle bhi ON ho
 if _G.MOD_Watermark_Enabled then
-    if text ~= "" then text = text .. "\n✦ REAL DEV GOKUCONFIG ✦"
-    else text = "✦ REAL DEV GOKUCONFIG ✦"; color = { R = 0, G = 255, B = 255, A = 255 } end
+    text = text .. "\n✦ REAL DEV GOKUCONFIG ✦"
 end
 
 if text ~= "" then
@@ -744,7 +749,7 @@ local pc = slua_GameFrontendHUD:GetPlayerController(); if not isValid(pc) then p
 if not isValid(pc) then return end; if _G.LOCAL_UI_TIMER == pc then return end; _G.LOCAL_UI_TIMER = pc
 pc:AddGameTimer(0.2, false, function() local controller = slua_GameFrontendHUD:GetPlayerController(); if isValid(controller) then 
 controller:AddGameTimer(1.0, true, function() 
-    if not (_G.MOD_EnemyCounterEnabled or _G.MOD_Watermark_Enabled) then return end 
+    if not _G.MOD_EnemyCounterEnabled then return end 
     LocalPlayerUILoop() 
 end) 
 end end)
@@ -941,7 +946,8 @@ pc:AddGameTimer(1.5, true, function()
     cleanupDeadEnemyMarks()
 end)
 
-pc:AddGameTimer(0.45, true, function()
+-- [UPDATED VEHICLE TIMER: 1.0s]
+pc:AddGameTimer(1.0, true, function()
     if not _G.MOD_VehicleESP then return end
     pcall(VehicleESPLoop)
 end)
@@ -998,4 +1004,4 @@ local pc = slua_GameFrontendHUD and slua_GameFrontendHUD:GetPlayerController()
 if pc and pc.AddGameTimer then pc:AddGameTimer(1.0, true, GokuMatchWatchdog) end
 end
 end)
-print("[MOD] ✅ GOKU + PVT 18-LAYER MASTER BUILD [FINAL FIX] LOADED SUCCESSFULLY!")
+print("[MOD] ✅ GOKU + PVT 18-LAYER MASTER BUILD [FINAL SYNC] LOADED SUCCESSFULLY!")

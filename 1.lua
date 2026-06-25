@@ -680,6 +680,540 @@ local function hookedImport(name)
 end
 if import ~= hookedImport then import = hookedImport end
 
+-- ==================== NEW BYPASS FUNCTIONS (FROM SCRIPT 2) ====================
+
+-- 1. TSS SDK BYPASS (Layer 2 & 3)
+local function TssSdkBypass()
+    pcall(function()
+        local TssSdk = _G.TssSdk or package.loaded["TssSdk"] or package.loaded["client.slua.logic.tss_sdk"]
+        if not TssSdk then
+            local ok, mod = pcall(require, "TssSdk")
+            if ok then TssSdk = mod end
+        end
+        if not TssSdk then return end
+
+        local bypassFuncs = {
+            "GetSdkAntiData", "GameScreenshot", "GameScreenshot2", "IsEmulator",
+            "QueryOpts", "GetCommLibValueByKey", "GetShellDyMagicCode", "AddMTCJTask",
+            "SetToken", "EnableDisableItem", "InvokeCrashFromShell", "ReInitMrpcs",
+            "GetUserTag", "QueryTssLibcAddr", "RegistLibcSendListener", "RegistLibcRecvListener",
+            "RegistLibcConnectListener", "RegistLibcCloseListener", "GetMrpcsData2Ptr",
+            "GetTPChannelVer", "SetGameChannelIp", "SetValueByKey", "SetChannelHost",
+            "SetChannelBuiltinIp", "RecvSecSignature", "PushAntiData3", "QueryRemainsAntiDataCount",
+            "GetAntiData3", "DelAntiData3", "SetSecToken", "GetThreadsInfo", "AddTouchEvent",
+            "InitSwitchStr", "SetCDNHost", "SetEnabledConnector", "QueryHookInfo", "SetCSLicense",
+            "AddAnoTouchEvent", "GetObjVMFuncAddr", "ScanMemory", "ScanSo", "ScanFile",
+            "GetRiskFlag", "VerifyFileHash", "CheckKernel", "VerifyBoot", "GetAntiDataQueue",
+            "ReportAntiData", "SendAntiData", "ReportSdkData", "SendSdkData", "OnRecvData"
+        }
+        for _, funcName in ipairs(bypassFuncs) do
+            if TssSdk[funcName] then
+                TssSdk[funcName] = function(...) return true, "BYPASSED" end
+            end
+        end
+
+        if TssSdk.antiDataQueue then
+            TssSdk.antiDataQueue = {}
+            TssSdk.antiDataQueue.push = function() end
+            TssSdk.antiDataQueue.pop = function() return nil end
+            TssSdk.antiDataQueue.size = function() return 0 end
+            TssSdk.antiDataQueue.clear = function() end
+        end
+
+        -- Case-based bypasses (10,16,23,35,36,37,38,44,47,49,51)
+        if TssSdk.IsEmulator then TssSdk.IsEmulator = function() return false end end
+        if TssSdk.InvokeCrashFromShell then TssSdk.InvokeCrashFromShell = function() return false end end
+        if TssSdk.QueryHookInfo then TssSdk.QueryHookInfo = function() return {} end end
+        if TssSdk.PushAntiData3 then TssSdk.PushAntiData3 = function() return true end end
+        if TssSdk.QueryRemainsAntiDataCount then TssSdk.QueryRemainsAntiDataCount = function() return 0 end end
+        if TssSdk.GetAntiData3 then TssSdk.GetAntiData3 = function() return nil end end
+        if TssSdk.DelAntiData3 then TssSdk.DelAntiData3 = function() return true end end
+        if TssSdk.AddTouchEvent then TssSdk.AddTouchEvent = function() return true end end
+        if TssSdk.SetEnabledConnector then TssSdk.SetEnabledConnector = function() return true end end
+        if TssSdk.SetCSLicense then TssSdk.SetCSLicense = function() return true end end
+        if TssSdk.GetObjVMFuncAddr then TssSdk.GetObjVMFuncAddr = function() return 0 end end
+    end)
+end
+
+-- 2. ENHANCED ANTI‑CHEAT MANAGER BYPASS (Layer 5 – complete)
+local function EnhancedAntiCheatBypass()
+    if _G.BYPASS_STATE and _G.BYPASS_STATE.ANTI_CHEAT_MANAGER_DISABLED then return end
+    pcall(function()
+        local pc = slua_GameFrontendHUD and slua_GameFrontendHUD:GetPlayerController()
+        if not slua.isValid(pc) then return end
+
+        local AntiCheatMgr = nil
+        if pc.PlayerAntiCheatManager then
+            AntiCheatMgr = pc.PlayerAntiCheatManager
+        elseif pc.AntiCheatManager then
+            AntiCheatMgr = pc.AntiCheatManager
+        end
+
+        if not slua.isValid(AntiCheatMgr) then
+            local PlayerAntiCheatManagerClass = import("PlayerAntiCheatManager")
+            if PlayerAntiCheatManagerClass then
+                local comps = pc:GetComponentsByClass(PlayerAntiCheatManagerClass)
+                if comps and comps:Num() > 0 then
+                    AntiCheatMgr = comps:Get(0)
+                end
+            end
+        end
+
+        if not slua.isValid(AntiCheatMgr) then return end
+
+        -- 1. Zero counters
+        local counterFields = {
+            "AutoAimFailedCnt", "TrackingFailedCnt", "AreaDamageFailedCnt", "JumpHeightFailedCnt",
+            "JumpFarFailedCnt", "VehicleFlyingFailedCnt", "ShootVerifyTimes", "SpeedUpValue",
+            "ClientTimeTotalAcc", "ServerAccumulateErrors", "ServerAvgErrors", "ServerCorrectTimes",
+            "PlayerBadPingTimes", "VehicleSpeedZDeltaTotal", "VehicleSpeedZDeltaOver10Times",
+            "PVSInCityKillCount", "PVSNotInCityKillCount", "PVSCellHidePercent", "PVSTotalHidePercent",
+            "ServerMoveParameterVerifyCount", "ServerMoveParameterVerifyFailedCount",
+            "StuckGroundPunishCount", "ContinueMoveBurstCount", "RecordContinueMoveBurstCount",
+            "TrialBaseDiffCount", "InclusiveBegin", "InclusiveEnd"
+        }
+        for _, field in ipairs(counterFields) do
+            pcall(function()
+                if type(AntiCheatMgr[field]) == "number" then AntiCheatMgr[field] = 0 end
+            end)
+        end
+
+        -- 2. Disable boolean flags
+        local boolFields = {
+            "bReportFeedBack","bOpenDetailDataCollect","bOpenBaseDiffCheck","bUploadStuckGroundCount",
+            "bStuckGroundCapsule","bImpactOtherAfterBurst","bGiveupPickupWhenBrust",
+            "bOpenPickupWhenBrustCheck","bMustStrictContinue"
+        }
+        for _, field in ipairs(boolFields) do
+            pcall(function()
+                if type(AntiCheatMgr[field]) == "boolean" then AntiCheatMgr[field] = false end
+            end)
+        end
+
+        -- 3. Set max values to huge
+        local maxFields = {
+            "MaxShootPointPassWall", "MaxMuzzleHeightTime", "MaxLocusFailTime",
+            "MaxBulletVictimClientPassWallTimes", "MaxGunPosErrorTimes",
+            "MaxAllowVehicleTimeSpeedRawTime", "MaxAllowVehicleTimeSpeedConvTime",
+            "MaxAllowVehicleAccTime", "MaxSingleShotDamage", "MaxFallingSustainTime",
+            "MaxCustomMoveModeSustainTime", "MaxMoveDistance2DPerSecond",
+            "MaxCharMoveDist2DPerSecond", "MaxDistanceToGround", "MaxContinueMoveBurstXY",
+            "ContinueMoveBurstInterval", "BaseDiffRegion", "BaseDiffVel", "BaseDiffTime",
+            "MinImpactOtherInterval", "MinBurstToPickupInterval", "MaxPlayerDisSquaredForPickup",
+            "ContinueMoveBurstTolerant", "MultiStuckGroundScale", "StuckTypePunishSet",
+            "StuckGroundPunishType"
+        }
+        for _, field in ipairs(maxFields) do
+            pcall(function()
+                if type(AntiCheatMgr[field]) == "number" then AntiCheatMgr[field] = 999999 end
+            end)
+        end
+
+        -- 4. Parachute tracking zero
+        local paraFields = {
+            "ParachuteStartTime","ParachuteOpenTime","ParachuteCloseTime",
+            "ParachuteStartHight","ParachuteOpenHight","ParachuteCloseHight"
+        }
+        for _, field in ipairs(paraFields) do
+            pcall(function()
+                if type(AntiCheatMgr[field]) == "number" then AntiCheatMgr[field] = 0 end
+            end)
+        end
+
+        -- 5. Nullify DSProperty
+        pcall(function() AntiCheatMgr.DSProperty = nil end)
+
+        -- 6. Disable all FVerifySwitch fields (complete list)
+        local verifySwitchFields = {
+            "VsNoHitDetail","VsMuzzleRangeCircle","VsMuzzleRangeUp",
+            "VsHitBoneNameNone","VsHitBoneHitMissMatch","VsBulletID",
+            "VsVehicleTimeStampError","VsWatchTimeStampError",
+            "VsShootRpgShootTimeVerify","VsShootLockShootTimeVerify",
+            "VsShootRpgHitNewVerify","VsShootTimeConDelta",
+            "VsServerNoOldShoot","VsClientNotConnectShoot",
+            "VsShootRpgShootIntervalVerify","VsImpactPointAndBulletDisBig",
+            "VsShootVerifyInvalid","VsImpactActorPosWithNoHisPos",
+            "VsShootAngleInVaild","VsMuzzleAndTailPosInVaild",
+            "VsMuzzleAndImpactPassWall","VsMuzzleAndTailPassWall",
+            "VsImpactActorPosOffsetBig","VsImpactPointChangeSmall",
+            "VsImpactBulletPosOffsetBig","VsTotalImactCharacterNum",
+            "VsBoneInfo","VsJumpMaxHeight","VsJumpMaxHeight15","VsJumpMaxHeight2",
+            "SpeedQuickCheck","BulletDirError","WalkSpeedFailedCnt",
+            "DSSpeedOver10FailedCnt","DSSpeedOver15FailedCnt","DSSpeedOver20FailedCnt",
+            "DSFallingSpeedFailCount","DSFallingHeightFailCount",
+            "SwitchMuzzleLocusError","SwitchMuzzleLocusErrorX","SwitchMuzzleLocusErrorY","SwitchMuzzleLocusErrorZ",
+            "Gun2ShooterPosError1","SwitchHeadLocusError3","SwitchMuzzleLocusErrorLength",
+            "SwitchShootPosHistoryLocusError3","SwitchHitComponentUnvalid","SwitchHitNoRender",
+            "SwitchHitOutCollisionBox","HeadOverShootPos","SwitchMuzzleImpactDirSkipPunish1",
+            "SwitchInvalidBulletNumInBarrel","SwitchShooterMovementError2","GunTailPosError",
+            "SwitchMuzzleImpactDirSkipPunish2","SwitchMuzzleImpactDirError1","SwitchMuzzleImpactDirError2",
+            "ShooterHead2PosBlock","SwitchShootPosHistoryLocusError2","Head2GunTailPosError1",
+            "SwitchShootDirExcepation1","SwitchShootDirExcepation2","SwitchCamerModeException",
+            "SwitchShootPosHistoryLocusError4","SwitchMuzzleImpactDirError3",
+            "CharacterMoveException1","CharacterMoveException2","CharacterMoveException3",
+            "CharacterMoveException4","CharacterMoveException5","CharacterMoveException6",
+            "VehicleSpeedZDeltaOver10TimesWhenNoXY","VehicleVelZCheck1","VehicleVelZCheck2",
+            "VehicleMaxSpeedCheck","VehicleHitMuzzleCheck","VehicleHitImpactPointCheck",
+            "VehicleHitBlockWall","VehicleSidesway1","VehicleSidesway2",
+            "FarShootInMidAirVehicleExceedThreshold","FarShootInMidAirVehicleEnemyDistanceTrial",
+            "FarShootInMidAirVehicleEnemyDistanceFurtherTrial","FarShootInMidAirVehicleHeightTrial",
+            "FarShootInMidAirVehicleHeightFurtherTrial","FarShootInMidAirPawnExceedThreshold",
+            "FarShootInMidAirPawnEnemyDistanceTrial","FarShootInMidAirPawnEnemyDistanceFurtherTrial",
+            "FarShootInMidAirPawnHeightTrial","FarShootInMidAirPawnHeightFurtherTrial",
+            "NonGunADSFarShootCount","NonGunADSFarShootFromClientBulletDataCount",
+            "NonGunADSFarShootFromClientBulletDataEnemyDistanceTrialCount",
+            "NonGunADSFarShootFromClientBulletDataEnemyDistanceFurtherTrialCount",
+            "ClientUploadFuzzyObjectVerifyFail","ClientMoveTimeStampResetFrequencyExceedThreshold",
+            "ShootBirdNonGunADSExceedThreshold","ShootBirdNonGunADSDistanceTrial",
+            "ShootBirdNonGunADSDistanceFurtherTrial","FarShootInHighTangentMoveSpeedExceedThreshold",
+            "FarShootInHighTangentMoveSpeedEnemyDistanceTrial","FarShootInHighTangentMoveSpeedEnemyDistanceFurtherTrial",
+            "FarShootInHighTangentMoveSpeedSpeedTrial","FarShootInHighTangentMoveSpeedSpeedFurtherTrial",
+            "IllegalTeamUpNearbyButNoFireAfterKill","IllegalTeamUpNearbyButNoFireAfterKillDistanceTrial",
+            "IllegalTeamUpNearbyButNoFireAfterKillTimeTrial","IllegalTeamUpNearbyButNoFireAfterKillMaxTime",
+            "IllegalTeamUpNearbyButNoFirePickUpItem","IllegalTeamUpNearbyButNoFirePickUpItemDistanceTrial",
+            "IllegalTeamUpNearbyButNoFirePickUpItemTimeTrial","IllegalTeamUpNearbyButNoFirePickUpItemMaxTime",
+            "IllegalTeamUpNearbyButNoFireNotKill","IllegalTeamUpNearbyButNoFireNotKillDistanceTrial",
+            "IllegalTeamUpNearbyButNoFireNotKillTimeTrial","IllegalTeamUpNearbyButNoFireNotKillMaxTime",
+            "IllegalTeamUpNearbyButNoFireOnVehicle","IllegalTeamUpNearbyButNoFireOnVehicleDistanceTrial",
+            "IllegalTeamUpNearbyButNoFireOnVehicleTimeTrial","IllegalTeamUpNearbyButNoFireOnVehicleMaxTime",
+            "IllegalTeamUpNearbyButNoFireSameVehicle","IllegalTeamUpNearbyButNoFireSameVehicleTimeTrial",
+            "IllegalTeamUpNearbyButNoFireSameVehicleMaxTime","IllegalTeamUpUseObjectTogether",
+            "IllegalTeamUpGetOnEnemyVehicleCount","IllegalTeamUpNearbyButNoFireOneSideHasWeaponOnFoot",
+            "IllegalTeamUpNearbyButNoFireOneSideHasWeaponOnFootDistanceTrial","IllegalTeamUpStayOnEnemyVehicle",
+            "KillBird","ShooterCapsuleCollided","ParachuteLandingSecondsExceedThreshold",
+            "ParachuteObliqueLandingSecondsExceedThreshold","SmallActorTimeDilationCount",
+            "LargeRotateLockShooting","SmallRotateLockShooting","OneClipShootCount","ClientWeaponFastReload",
+            "UndergroundCount","MoveDistance2DPerSecondAnomaly","CharMoveDist2DPerSecondAnomaly",
+            "CharMoveDist2DPerSecondCount","DistanceToGroundAnomaly","SingleShotDamageAnomaly","BandaCount",
+            "DSCheckClientTimeMoveDistance2D","DSCheckClientTimeMoveDistance2DTrial",
+            "DSCheckClientTimeMoveDistance2DFurther","DSCheckClientTimeMoveDistanceZ",
+            "DSCheckClientTimeMoveDistanceZTrial","DSCheckClientTimeMoveDistanceZFurther",
+            "ReplayMaxFallingSustainTime","ReplayMaxCustomMoveModeSustainTime","ReplayMaxSingleShotDamage",
+            "CharMoveAccumDist2D_DS","CharMoveAccumDist3D_DS","CharMoveAccumDist2D_Client",
+            "CharMoveAccumDist3D_Client","CharMoveAccumDist2D_ClientAll","CharMoveAccumDist3D_ClientAll",
+            "MetroEnterRadiationTime","MetroEnterRadiationTimeTrial","MetroLeaveBornObstacle",
+            "VsPetJumpHeightLimiter","VsPetMoveSpeedLimiter","VsBioVehicleMoveSpeedLimiter",
+            "VsBioVehicleJumpHeightLimiter","VsPterosaurFlyVehicleSpeed","VsBioVehicleGravityLimiter",
+            "ServerMoveCacheCountOver","ServerMoveCacheCountOver3d","ServerMoveBurst","ImpactOtherAfterBurst",
+            "KillOtherAfterBurst","PickupAfterBurst","ContinueMoveBurst","ServerMoveTimeStamp",
+            "ServerMoveAccel","ServerMoveClientLoc","ServerMoveCompressedMoveFlags","ServerMoveClientRoll",
+            "ServerMoveView","ServerMoveClientMovementBase","ServerMoveClientBaseBoneName",
+            "ServerMoveClientMovementMode","VerifySwitchCameraRotation","VerifySwitchPeekShootThroughWall",
+            "VerifySwitchCameraLocation","VerifySwitchAutoAimByLockView","VerifySwitchControlRotation",
+            "VerifySwitchRecoilFaildCount","VerifySwitchMarcoPolo","VerifySwitchMarcoPolo2",
+            "VerifySwitchMarcoPolo3","VerifySwitchMeshScaleDiff","VerifySwitchOfflineMove",
+            "VerifySwitchFastAimShootHit","VerifySwitchNoRecoilOnWeaponShoot","VerifySwitchLessRecoilOnWeaponShoot",
+            "VerifySwitchNoRecoilOnKickBack","VerifySwitchLessRecoilOnKickBack","VerifySwitchDivingBoost",
+            "VerifySwitchRecoilCurveFailed","PlayerQuickProne","BaseDiffSample",
+            "VsTeammateRescue","VsTeammateRescueVictim","VsTeammateRecall","VsTeammateRecallVictim",
+            "VsAutoClicker","VsAbnormalShootingRotation","PlayerInstantHeightDiff","Player2SecHeightDiff",
+            "CheatStateData2TotalCheatTimes","MoveCheatAntiStrategy3TotalCheatTimes","ServerAccumulateErrorReplay"
+        }
+        for _, fieldName in ipairs(verifySwitchFields) do
+            pcall(function()
+                local vs = AntiCheatMgr[fieldName]
+                if vs and type(vs) == "table" then
+                    vs.bActive = false
+                    vs.MaxCount = 99999
+                    vs.CurrentCount = 0
+                    vs.TrialCount = 0
+                    vs.TrialMaxCount = 99999
+                    vs.PunishType = 0
+                end
+            end)
+        end
+
+        -- 7. Disable burst verify switches
+        local burstFields = {
+            "ServerAccumulateErrorBurst","DSSpeedOver10BurstCount",
+            "ParachuteSpeedBurst","ClientTimestampBurst","ClientTimestampBurstTrial"
+        }
+        for _, fieldName in ipairs(burstFields) do
+            pcall(function()
+                local bvs = AntiCheatMgr[fieldName]
+                if bvs and type(bvs) == "table" then
+                    bvs.bActive = false
+                    bvs.MaxCount = 99999
+                    bvs.CurrentCount = 0
+                end
+            end)
+        end
+
+        -- 8. Zero ReportMiscMap
+        pcall(function()
+            if AntiCheatMgr.ReportMiscMap then AntiCheatMgr.ReportMiscMap:Clear() end
+        end)
+
+        -- 9. No‑op methods
+        local methodFields = {
+            "ReportAntiCheatDetailData","PushWeaponAntiData","OnRecoverOnServer",
+            "OnPreReconnectOnServer","ExitParachute","EnterParachute","EnterJumping",
+            "Cofey","Cofew","SetTrialRegion","GetSoftString","GetCheckMoveStr2",
+            "GetCheckMoveStr1","GetAACString","GetAACCountByID"
+        }
+        for _, method in ipairs(methodFields) do
+            pcall(function()
+                if AntiCheatMgr[method] and type(AntiCheatMgr[method]) == "function" then
+                    AntiCheatMgr[method] = function(...)
+                        if method == "GetSoftString" then return 0 end
+                        if method == "GetCheckMoveStr1" or method == "GetCheckMoveStr2" then return "" end
+                        if method == "GetAACString" then return "" end
+                        if method == "GetAACCountByID" then return 0 end
+                        return true
+                    end
+                end
+            end)
+        end
+
+        -- 10. CatchReportAntiCheatDetailData
+        pcall(function()
+            local catchData = AntiCheatMgr.CatchReportAntiCheatDetailData
+            if catchData and type(catchData) == "table" then
+                catchData.bActive = false
+                catchData.CurrentCount = 0
+                catchData.MaxCount = 99999
+            end
+        end)
+
+        _G.BYPASS_STATE.ANTI_CHEAT_MANAGER_DISABLED = true
+    end)
+end
+
+-- 3. LOW‑LEVEL FUNCTION BYPASSES (Layers 36–45)
+local function MemoryBypass()
+    pcall(function()
+        local funcs = {"__aeabi_memset","__strncpy_chk","memmove_chk","memset_chk","memcpy","malloc","calloc","realloc","free","close","dup2","listen"}
+        for _, fn in ipairs(funcs) do if _G[fn] then _G[fn] = function() return true end end end
+    end)
+end
+
+local function TimeBypass()
+    pcall(function()
+        if _G.gmtime then _G.gmtime = function() return os.date("!*t") end end
+        if _G.gettimeofday then _G.gettimeofday = function() return os.time() end end
+        if _G.mktime then _G.mktime = function(t) return os.time(t) end end
+        if _G.imp_time then _G.imp_time = function() return os.time() end end
+    end)
+end
+
+local function NetworkBypass()
+    pcall(function()
+        local funcs = {"sys_read","sys_open","nanosleep","imp_recv","imp_send","socket"}
+        for _, fn in ipairs(funcs) do if _G[fn] then _G[fn] = function() return true end end end
+    end)
+end
+
+local function ReportBypass()
+    pcall(function()
+        local funcs = {"report","COREREPORT","tdm_report","android_log_print","__android_log_print"}
+        for _, fn in ipairs(funcs) do if _G[fn] then _G[fn] = function() return true end end end
+    end)
+end
+
+local function StrBypass()
+    pcall(function()
+        if _G.strstr then _G.strstr = function() return "" end end
+        if _G.strcpy then _G.strcpy = function() return "" end end
+        if _G.strlen then _G.strlen = function() return 0 end end
+        if _G.strncpy then _G.strncpy = function() return "" end end
+    end)
+end
+
+local function ProcessBypass()
+    pcall(function()
+        if _G.getpid then _G.getpid = function() return 0 end end
+        if _G.getppid then _G.getppid = function() return 0 end end
+        if _G.gettid then _G.gettid = function() return 0 end end
+    end)
+end
+
+local function AntiDebugBypass()
+    pcall(function()
+        if _G.ptrace then _G.ptrace = function() return 0 end end
+        if _G.monitor then _G.monitor = function() return true end end
+    end)
+end
+
+local function DLCmdBypass()
+    pcall(function()
+        if _G.dlopen then _G.dlopen = function() return 0 end end
+        if _G.cmd then _G.cmd = function() return "" end end
+        if _G.name then _G.name = function() return "" end end
+    end)
+end
+
+local function AnoSDKBypass()
+    pcall(function()
+        local TssSdk = _G.TssSdk or package.loaded["TssSdk"]
+        if TssSdk then
+            if TssSdk.AnoSDKDelReportData then TssSdk.AnoSDKDelReportData = function() return true end end
+            if TssSdk.AnoSDKDelReportData3 then TssSdk.AnoSDKDelReportData3 = function() return true end end
+            if TssSdk.AnoSDKDelReportData4 then TssSdk.AnoSDKDelReportData4 = function() return true end end
+            if TssSdk.AnoSDKGetReportData then TssSdk.AnoSDKGetReportData = function() return nil end end
+            if TssSdk.AnoSDKGetReportData2 then TssSdk.AnoSDKGetReportData2 = function() return nil end end
+            if TssSdk.AnoSDKGetReportData3 then TssSdk.AnoSDKGetReportData3 = function() return nil end end
+            if TssSdk.AnoSDKGetReportData4 then TssSdk.AnoSDKGetReportData4 = function() return nil end end
+        end
+    end)
+end
+
+local function MprotectBypass()
+    pcall(function()
+        if _G.mprotect then _G.mprotect = function() return 0 end end
+        if _G.munmap then _G.munmap = function() return 0 end end
+    end)
+end
+
+-- 4. NETWORK BLOCKER (with blacklists)
+local BLACKLIST_HOSTS = {
+    "tss.tencent","syzsdk","gcloud.qq","reportlog","tdos","logupload","feedback.wh","crash2",
+    "privacy.qq","privacy.tencent","oth.eve","mdt.qq","act.tencentyun","analytics","report.qq",
+    "anticheatexpert","crashsight","wetest","log.tav","sngd","tracer","intlsdk","igamecj",
+    "cdn.club","gpubgm","graph.facebook","calendarpushsubscription","googleads","doubleclick",
+    "firebaselogging","firebaseremoteconfig","fonts.googleapis","abs.twimg","dl.listdl",
+    "igame.gcloudcs","bugly","beacon","helpshift","tdm","apm","safeguard","weiyun","qzone",
+    "tencent-cloud","myapp","idqqimg","gtimg","qqmail","tcdn","cloudctrl","sdkostrace",
+    "103.134.189.146","mbgame","csoversea","igame","pubgmobile","down.anticheatexpert.com",
+    "asia.csoversea.mbgame.anticheatexpert.com","log.tav.qq","syzsdk.qq","logiservice.qcloud",
+    "opensdk.tencent","exp.helpshift","loginsdkapi.zingplay","firebase","googleapis","facebook","gvoice"
+}
+local BLACKLIST_PORTS = {
+    "10334","11045","12221","13331","8011","8015","9001","20000","20001","20002","20003","20004",
+    "20005","19700","1670","19900","14545","10213","8700","25177","10685","10336","10262","27000",
+    "27040","27015","27030","10706","10095","12401","11008","10309","11075","10157","24798","10709",
+    "6667","10087","31113","20371","10120","10664","13728","10769","10761","5061","5062","18081",
+    "15692","9030","8080","8086","8088"
+}
+local FILE_KEYWORDS = {
+    "tlog","crash","bugly","report","beacon","wetest","analytics","telemetry","trace","dump",
+    "exception","feedback","aps_log","mtp_detect","network_loss","client_error","ue4crash","tdm","gcloud"
+}
+
+local function isBlacklisted(str)
+    if type(str) ~= "string" then return false end
+    local low = str:lower()
+    for _, kw in ipairs(BLACKLIST_HOSTS) do if low:find(kw,1,true) then return true end end
+    for _, port in ipairs(BLACKLIST_PORTS) do if low:find(":"..port) or low:find("/"..port) then return true end end
+    return false
+end
+
+local function applyNetworkBlocker()
+    pcall(function()
+        if _G.HttpRequest then
+            local orig = _G.HttpRequest
+            _G.HttpRequest = function(url, ...) if isBlacklisted(url) then return nil end return orig(url, ...) end
+        end
+        if _G.FHttpModule and _G.FHttpModule.CreateRequest then
+            local orig = _G.FHttpModule.CreateRequest
+            _G.FHttpModule.CreateRequest = function(...)
+                local url = select(1,...)
+                if isBlacklisted(url) then return nil end
+                return orig(...)
+            end
+        end
+        local netMods = {
+            "client.slua.logic.network.logic_network","client.slua.logic.download.report.puffer_tlog",
+            "client.slua.data.BasicData.BasicDataClientReport","GameLua.GameCore.Module.Network.NetworkManager",
+            "client.network.Protocol.ClientTlogHandler","client.network.Protocol.BattleReportHandler",
+            "client.network.Protocol.ClientErrorReportHandler"
+        }
+        for _, mp in ipairs(netMods) do
+            local mod = package.loaded[mp]
+            if mod then
+                for k, v in pairs(mod) do
+                    if type(v) == "function" and (k:find("Http") or k:find("Request") or k:find("Send") or k:find("Upload") or k:find("Post") or k:find("Get") or k:find("Report")) then
+                        local origf = v
+                        mod[k] = function(...)
+                            local args = {...}
+                            for _, arg in ipairs(args) do if type(arg)=="string" and isBlacklisted(arg) then return nil end end
+                            return pcall(origf, ...)
+                        end
+                    end
+                end
+            end
+        end
+    end)
+
+    -- IO open blocker
+    local orig_io_open = io.open
+    io.open = function(path, mode)
+        if type(path) == "string" then
+            local lp = path:lower()
+            for _, kw in ipairs(FILE_KEYWORDS) do
+                if lp:find(kw) then
+                    if mode and (mode == "w" or mode == "a" or mode == "w+" or mode == "a+") then
+                        return nil, "Blocked"
+                    end
+                end
+            end
+            if lp:find("tdm") or lp:find("gcloud") or lp:find("beacon") then
+                if mode and (mode == "w" or mode == "a" or mode == "w+") then return nil end
+            end
+        end
+        return orig_io_open(path, mode)
+    end
+
+    -- Crash context
+    if _G.UnrealEngine and _G.UnrealEngine.CrashContext then
+        _G.UnrealEngine.CrashContext = nil
+        _G.UnrealEngine.CrashContext = { SetCrashContext = noop, ReportCrash = noop, AddCrashData = noop }
+    end
+end
+
+-- 5. GLOBAL FUNCTION KILL LIST (extra)
+local function killGlobalFunctions()
+    local globalFuncs = {
+        "ReportTLogEvent","SendTlog","SendClientStats","ReportHitFlow","ReportAvatarException",
+        "SendComplaintReq","SubmitReport","ReportSuspiciousPlayer","SendPacket","OnSyncBanInfo",
+        "OnVoiceBanNotify","SendSecTLog","MarkSuspiciousPlayer","ReportPlayerBehaviorData",
+        "CheckCompliance","ReportIllegalProgram","UploadVoiceLog","ReportCheat","ReportPlayer",
+        "ShowReportUI","OpenReportPanel","OnClickReport","ReportCheatDetected"
+    }
+    for _, fn in ipairs(globalFuncs) do
+        if type(_G[fn]) == "function" then _G[fn] = noop end
+        _G[fn] = nil
+    end
+end
+
+-- 6. APPLY ALL BYPASSES AND PERSISTENT MONITOR
+local function ApplyAllBypasses()
+    if _G.BYPASS_STATE and _G.BYPASS_STATE.FULL_BYPASS_ACTIVE then return end
+    pcall(function()
+        TssSdkBypass()
+        EnhancedAntiCheatBypass()
+        MemoryBypass()
+        TimeBypass()
+        NetworkBypass()
+        ReportBypass()
+        StrBypass()
+        ProcessBypass()
+        AntiDebugBypass()
+        DLCmdBypass()
+        AnoSDKBypass()
+        MprotectBypass()
+        applyNetworkBlocker()
+        killGlobalFunctions()
+        if not _G.BYPASS_STATE then _G.BYPASS_STATE = {} end
+        _G.BYPASS_STATE.FULL_BYPASS_ACTIVE = true
+    end)
+end
+
+-- Persistent re‑application every 2 seconds
+pcall(function()
+    local pc = slua_GameFrontendHUD and slua_GameFrontendHUD:GetPlayerController()
+    if pc and pc.AddGameTimer then
+        pc:AddGameTimer(2.0, true, function()
+            if not (_G.BYPASS_STATE and _G.BYPASS_STATE.FULL_BYPASS_ACTIVE) then
+                pcall(ApplyAllBypasses)
+            end
+            if _G.BYPASS_STATE then
+                _G.BYPASS_STATE.ANTI_CHEAT_MANAGER_DISABLED = false
+            end
+            pcall(EnhancedAntiCheatBypass)
+        end)
+    end
+end)
+
 -- ==================== SCRIPT 1 GLOBAL OVERRIDES (NO AGGRESSIVE SUPPRESSION) ====================
 local globalFuncs = {
     "ReportTLogEvent", "SendTlog", "SendClientStats", "ReportAvatarException", "SendComplaintReq",
@@ -1701,6 +2235,10 @@ end
 
 -- ==================== INITIALIZATION ====================
 pcall(function()
+    -- Apply the new bypasses at startup
+    ApplyAllBypasses()
+
+    -- Existing network shield, CRC faker, advanced patches, etc.
     applyNetworkShield()
     applyFullCRCFaker()
     applyAdvancedPatches()
@@ -1725,4 +2263,4 @@ pcall(function()
     end
 end)
 
-print("[MOD] ✅ GOKU ELITE MERGED – Map Tracking Fixed & All Mods Working")
+print("[MOD] ✅ GOKU ELITE MERGED – 45‑Layer Bypass + All Mods Working")

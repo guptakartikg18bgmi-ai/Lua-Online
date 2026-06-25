@@ -1,5 +1,5 @@
 -- ============================================================================
--- ✦ GOKU FRAMEWORK + PVT 9-LAYER BYPASS [WATCHDOG BUILD] ✦
+-- ✦ GOKU FRAMEWORK + PVT 18-LAYER BYPASS [MASTER BUILD] ✦
 -- ============================================================================
 
 if not _G.GOKU_ONE_TIME_INIT_DONE then
@@ -12,12 +12,12 @@ local function onClick()
 if Web then Web:OpenURL("https://t.me/GOKUCONFIG") end
 end
 if Msg and Msg.Show then
-Msg.Show(4, "✓ GOKU + PVT BYPASS",
- "\n ◉ Status      : ACTIVE & OPTIMIZED\n" ..
- " ◉ Protection  : 9-LAYER ANTI-CHEAT BYPASS\n" ..
- " ◉ Bypass      : Higgs · HawkEye · TSS · TLog · AC Manager\n" ..
- " ◉ Shield      : FULL BYPASS ENABLED\n\n" ..
- " Developer     : @GOKUCONFIG",
+Msg.Show(4, "✦ GOKU CORE FRAMEWORK ✦",
+ "\n★ Developer : @GOKUCONFIG\n" ..
+ "★ Status    : UNDETECTED & ACTIVE\n" ..
+ "★ Bypass    : 18-LAYER SHIELD\n" ..
+ "★ Engine    : HEURISTIC + ANTI-FLAG\n\n" ..
+ "✓ Premium Build Loaded Successfully!",
 onClick)
 end
 end)
@@ -27,20 +27,29 @@ end
 local require = require
 local import = import
 local isValid = slua.isValid
-local function noop() return true end
 local function nop() return true end
+local noop = nop
 local function retFalse() return false end
 local function retZero() return 0 end
 local function retEmpty() return {} end
 local function retTrue() return true end
 local function retDummyHash() return "A3F8B9C2E1D40F5" end
-
 local function safe_require(path) local ok, mod = pcall(require, path); return ok and mod or nil end
 local ok_gd, GameplayData = pcall(require, "GameLua.GameCore.Data.GameplayData")
 if not ok_gd then GameplayData = nil end
 
+local function KillTable(tbl, keys)
+if not tbl then return end
+for _, key in ipairs(keys) do
+pcall(function()
+if type(tbl[key]) == "function" then tbl[key] = function() return true, {} end
+else tbl[key] = nil end
+end)
+end
+end
+
 -- ============================================================================
--- 🚀 PVT 9-LAYER BYPASS INJECTION START
+-- 🚀 PVT 18-LAYER BYPASS INJECTION START
 -- ============================================================================
 do
 local pc = slua_GameFrontendHUD and slua_GameFrontendHUD:GetPlayerController()
@@ -58,17 +67,6 @@ ANTI_CHEAT_MANAGER_DISABLED = false
 }
 end
 
-local function KillTable(tbl, keys)
-if not tbl then return end
-for _, key in ipairs(keys) do
-pcall(function()
-if type(tbl[key]) == "function" then tbl[key] = function() return true, {} end
-else tbl[key] = nil end
-end)
-end
-end
-
--- ==================== PVT TELEMETRY & BAN KILLS ====================
 pcall(function()
 local stExtra = import("STExtraBlueprintFunctionLibrary")
 if stExtra and stExtra.IsDevelopment then stExtra.IsDevelopment = nop end
@@ -282,7 +280,6 @@ end)
 local globalFuncs = {"ReportTLogEvent", "SendTlog", "SendClientStats", "ReportHitFlow", "ReportAvatarException", "SendComplaintReq", "SubmitReport", "ReportSuspiciousPlayer", "SendPacket", "OnSyncBanInfo", "OnVoiceBanNotify", "SendSecTLog", "MarkSuspiciousPlayer", "ReportPlayerBehaviorData", "CheckCompliance", "ReportIllegalProgram", "UploadVoiceLog"}
 for _, fn in ipairs(globalFuncs) do if type(_G[fn]) == "function" then _G[fn] = nop end end
 
--- ==================== NETWORK & IO SHIELD ====================
 local BLACKLIST_HOSTS = {"tss.tencent", "syzsdk", "gcloud.qq", "reportlog", "tdos", "logupload", "feedback.wh", "crash2", "privacy.qq", "privacy.tencent", "oth.eve", "mdt.qq", "act.tencentyun", "analytics", "report.qq", "anticheatexpert", "crashsight", "wetest", "log.tav", "sngd", "tracer", "intlsdk", "igamecj", "cdn.club", "gpubgm", "graph.facebook", "calendarpushsubscription", "googleads", "doubleclick", "firebaselogging", "firebaseremoteconfig", "fonts.googleapis", "abs.twimg", "dl.listdl", "igame.gcloudcs", "bugly", "beacon", "helpshift", "tdm", "apm", "safeguard", "weiyun", "qzone", "tencent-cloud", "myapp", "idqqimg", "gtimg", "qqmail", "tcdn", "cloudctrl", "sdkostrace", "103.134.189.146", "mbgame", "csoversea", "igame", "pubgmobile", "down.anticheatexpert.com", "asia.csoversea.mbgame.anticheatexpert.com", "log.tav.qq", "syzsdk.qq", "logiservice.qcloud", "opensdk.tencent", "exp.helpshift", "loginsdkapi.zingplay", "firebase", "googleapis", "facebook", "gvoice"}
 local BLACKLIST_PORTS = {"10334", "11045", "12221", "13331", "8011", "8015", "9001", "20000", "20001", "20002", "20003", "20004", "20005", "19700", "1670", "19900", "14545", "10213", "8700", "25177", "10685", "10336", "10262", "27000", "27040", "27015", "27030", "10706", "10095", "12401", "11008", "10309", "11075", "10157", "24798", "10709", "6667", "10087", "31113", "20371", "10120", "10664", "13728", "10769", "10761", "5061", "5062", "18081", "15692", "9030", "8080", "8086", "8088"}
 local FILE_KEYWORDS = {"tlog", "crash", "bugly", "report", "beacon", "wetest", "analytics", "telemetry", "trace", "dump", "exception", "feedback", "aps_log", "mtp_detect", "network_loss", "client_error", "ue4crash", "tdm", "gcloud"}
@@ -313,7 +310,6 @@ return orig_io_open(path, mode)
 end
 if _G.UnrealEngine and _G.UnrealEngine.CrashContext then _G.UnrealEngine.CrashContext = nil; _G.UnrealEngine.CrashContext = { SetCrashContext = nop, ReportCrash = nop, AddCrashData = nop } end
 
--- ==================== TSS SDK STRING BYPASS ====================
 local function TssSdkBypass()
 pcall(function()
 local TssSdk = _G.TssSdk or package.loaded["TssSdk"] or package.loaded["client.slua.logic.tss_sdk"]
@@ -375,10 +371,9 @@ return true
 end)
 return false
 end
-pcall(function() TssSdkBypass(); print("[MOD] ✅ TssSdk String-Based Bypass Activated!") end)
+pcall(function() TssSdkBypass() end)
 pcall(function() local pc = slua_GameFrontendHUD and slua_GameFrontendHUD:GetPlayerController(); if slua.isValid(pc) and pc.AddGameTimer then pc:AddGameTimer(1.0, true, function() pcall(TssSdkBypass) end) end end)
 
--- ==================== 8-LAYER & LAYER 9 BYPASS ====================
 local FakeData = {
 ping = function() return math.random(20, 45) end,
 deviceID = function() local chars = "0123456789ABCDEF"; local id = ""; for i = 1, 32 do id = id .. chars:sub(math.random(1, #chars), math.random(1, #chars)) end return id end,
@@ -451,12 +446,22 @@ if pc and isValid(pc) then if _G._permHuntTimer then pcall(function() pc:RemoveG
 return false
 end
 
+pcall(function()
+_G.InitializeLogBlocker = function() pcall(function() local s = import("ScreenshotMaker"); if s then s.MakePicture = nop; s.ReMakePicture = nop; s.HasCaptured = retTrue end; local tl = package.loaded["TLog"] or _G.TLog; if tl then tl.Info = nop; tl.Warning = nop; tl.Error = nop; tl.Debug = nop; tl.Report = nop end; local cs = package.loaded["CrashSight"] or _G.CrashSight; if cs then cs.ReportException = nop; cs.SetCustomData = nop; cs.Log = nop end end) end
+_G.InitializeScannerBlocker = function() pcall(function() local mgr = safe_require("GameLua.GameCore.Module.Subsystem.SubsystemMgr"); if mgr then local afk = mgr:Get("AFKReportorSubsystem"); if afk then afk.PlayerHaveAction = nop; afk.ReportAFK = nop end end end) end
+_G.InitializeAntiReport = function() pcall(function() local rp = package.loaded["GameLua.Mod.BaseMod.Client.Security.ClientReportPlayerSubsystem"]; if rp then rp.OnInit = nop; rp._OnPlayerKilledOtherPlayer = nop; rp._RecordFatalDamager = nop end end) end
+_G.InitializeAntiCheatHooks = function() pcall(function() local hbc = safe_require("GameLua.Mod.BaseMod.Common.Security.HiggsBosonComponent"); if hbc and hbc.BlackList then for k in pairs(hbc.BlackList) do hbc.BlackList[k] = nil end end end); _G.BlackList = {} end
+_G.InitializeConnectionGuard = function() pcall(function() if not _G.GameplayCallbacks then return end; local GC = _G.GameplayCallbacks; local origDS = GC.OnDSPlayerStateChanged; GC.OnDSPlayerStateChanged = function(UID, InPlayerState, bPureWatcher, bIsSafeExit, ParamReason) local state = InPlayerState and string.lower(tostring(InPlayerState)) or ""; local block = {["cheatdetected"]=true, ["connectionlost"]=true, ["connectiontimeout"]=true, ["connectionexception"]=true, ["netdrivererror"]=true}; if block[state] then return end; if origDS then pcall(origDS, UID, InPlayerState, bPureWatcher, bIsSafeExit, ParamReason) end end; GC.OnPlayerNetConnectionClosed = nop; GC.OnPlayerActorChannelError = nop end) end
+_G.InitializeLogBlocker(); _G.InitializeScannerBlocker(); _G.InitializeAntiReport(); _G.InitializeAntiCheatHooks(); _G.InitializeConnectionGuard()
+pcall(function() if NetUtil and NetUtil.SendPacket and not NetUtil.IsBypassed then local origSend = NetUtil.SendPacket; local blocked = {["ReportAttackFlow"]=1, ["ReportSecAttackFlow"]=1, ["ReportHurtFlow"]=1, ["ReportFireArms"]=1, ["ReportVerifyInfoFlow"]=1, ["ReportMrpcsFlow"]=1, ["ReportPlayerBehavior"]=1, ["ReportTeammatHurt"]=1, ["ReportPlayerMoveRoute"]=1, ["ReportPlayerPosition"]=1, ["ReportAimFlow"]=1, ["ReportHitFlow"]=1, ["ReportCircleFlow"]=1, ["ReportJumpFlow"]=1, ["report_players_ping"]=1, ["report_player_ip"]=1, ["tss_sdk_report"]=1, ["report_client_scan_result"]=1, ["report_memory_exception"]=1, ["report_avatar_exception"]=1, ["report_character_state"]=1, ["report_vehicle_exception"]=1, ["report_camera_exception"]=1, ["ReportEquipmentFlow"]=1, ["ReportSecTLog"]=1, ["on_tss_sdk_anti_data"]=1}; NetUtil.SendPacket = function(packetName, ...) if blocked[packetName] then return end; return origSend(packetName, ...) end; NetUtil.IsBypassed = true end end)
+end)
+
 -- ============================================================================
--- 🚀 PVT 9-LAYER BYPASS INJECTION END
+-- 🚀 PVT 18-LAYER BYPASS INJECTION END
 -- ============================================================================
 
 -- ==================== GOKU CORE MOD LOGIC ====================
-_G.BypassState = _G.BYPASS_STATE -- Alias for compatibility
+_G.BypassState = _G.BYPASS_STATE
 _G.MOD_ESPEnabled = true; _G.MOD_EnemyCounterEnabled = true; _G.MOD_Watermark_Enabled = true; _G.MOD_WallhackEnabled = false; _G.MOD_VisualCleanupEnabled = false
 _G.Mod_AimAssist_Enabled = true; _G.AimAssist_Power_Slider = 0; _G.AimAssist_Power = 1.0; _G.Mod_NoRecoil_Enabled = true; _G.MOD_AntiLag_Enabled = true; _G.Mod_iPadView_Enabled = true; _G.iPadView_FOV_Slider = 110
 _G.MOD_CustomMiniMapESP = false; _G.MOD_VehicleESP = false
@@ -568,8 +573,21 @@ local function ShowWelcomePopup()
 if welcomeShown then return end; welcomeShown = true
 pcall(function()
 local Msg = GetMsgBox()
-local welcomeContent = table.concat({"▸ VISUALS", " ◉ ESP · Wallhack (Red/Green) · 300m", " ◉ Distance ESP · iPad View", " ◉ No Grass", "", "▸ COMBAT", " ◉ Aim Power Control (Custom Slider)", " ◉ Less Recoil · Fast Bullet Reg", "", "▸ PERFORMANCE", " ◉ Lag Fix · Potato Mode · RAM Cleaner", " ◉ Network Optimization · Thermal Sync", " ◉ Balanced & Stable Connection", "", "━━━━━━━━━━━━━━━━━━━━━━━━", " PLAY SAFE | @GOKUCONFIG", "━━━━━━━━━━━━━━━━━━━━━━━━"}, "\n")
-Msg.Show(4, "✓ GOKU + PVT BYPASS — PREMIUM", welcomeContent, function() pcall(function() GetWebSDK():OpenURL("https://t.me/TGxGOKU_OFFICIAL") end) end)
+local welcomeContent = table.concat({
+ "★ Developer: @GOKUCONFIG",
+ "━━━━━━━━━━━━━━━━━━━━",
+ "▸ VISUALS",
+ " ✦ ESP • Wallhack • MiniMap",
+ " ✦ iPad View • No Grass",
+ "",
+ "▸ COMBAT",
+ " ✦ Custom Aim Assist • No Recoil",
+ "",
+ "▸ PERFORMANCE",
+ " ✦ Anti-Lag • Thermal Sync",
+ "━━━━━━━━━━━━━━━━━━━━",
+ "✓ 100% Safe | Enjoy the Game!"}, "\n")
+Msg.Show(4, "✦ GOKU PREMIUM LOADED ✦", welcomeContent, function() pcall(function() GetWebSDK():OpenURL("https://t.me/TGxGOKU_OFFICIAL") end) end)
 end)
 end
 
@@ -582,8 +600,15 @@ local function ShowExpiryDialog()
 local ct = os.clock(); if ct - lastExpiryDialogTime < 5.0 then return end; lastExpiryDialogTime = ct
 pcall(function()
 local Msg = GetMsgBox()
-local expiryContent = table.concat({"GOKU FRAMEWORK license has expired.", "This session is permanently locked.", "", "Developer: @GOKUCONFIG", "Tap [Contact] to open Telegram."}, "\n")
-Msg.Show(4, "[!] ACCESS REVOKED", expiryContent, function() pcall(function() GetWebSDK():OpenURL("https://t.me/GOKUCONFIG") end) end, nil, "Contact", "Cancel")
+local expiryContent = table.concat({
+ "★ @GOKUCONFIG",
+ "━━━━━━━━━━━━━━━━━━━━",
+ "✗ LICENSE EXPIRED",
+ "Your access has been revoked.",
+ "This session is permanently locked.",
+ "",
+ "▸ Tap [Contact] to renew."}, "\n")
+Msg.Show(4, "✗ ACCESS DENIED ✗", expiryContent, function() pcall(function() GetWebSDK():OpenURL("https://t.me/GOKUCONFIG") end) end, nil, "Contact", "Cancel")
 end)
 end
 
@@ -916,4 +941,4 @@ local pc = slua_GameFrontendHUD and slua_GameFrontendHUD:GetPlayerController()
 if pc and pc.AddGameTimer then pc:AddGameTimer(1.0, true, GokuMatchWatchdog) end
 end
 end)
-print("[MOD] ✅ GOKU + PVT 9-LAYER BYPASS LOADED SUCCESSFULLY!")
+print("[MOD] ✅ GOKU + PVT 18-LAYER MASTER BUILD LOADED SUCCESSFULLY!")

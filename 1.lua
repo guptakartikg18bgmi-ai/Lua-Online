@@ -1,5 +1,5 @@
 -- ============================================================================
--- ✦ GOKU FRAMEWORK + PVT 18-LAYER BYPASS [MASTER BUILD] ✦
+-- ✦ GOKU FRAMEWORK + PVT 18-LAYER BYPASS [MASTER BUILD - OPTIMIZED] ✦
 -- ============================================================================
 
 if not _G.GOKU_ONE_TIME_INIT_DONE then
@@ -372,7 +372,8 @@ end)
 return false
 end
 pcall(function() TssSdkBypass() end)
-pcall(function() local pc = slua_GameFrontendHUD and slua_GameFrontendHUD:GetPlayerController(); if slua.isValid(pc) and pc.AddGameTimer then pc:AddGameTimer(1.0, true, function() pcall(TssSdkBypass) end) end end)
+-- [OPTIMIZED TIMER: 1.0s -> 1.5s]
+pcall(function() local pc = slua_GameFrontendHUD and slua_GameFrontendHUD:GetPlayerController(); if slua.isValid(pc) and pc.AddGameTimer then pc:AddGameTimer(1.5, true, function() pcall(TssSdkBypass) end) end end)
 
 local FakeData = {
 ping = function() return math.random(20, 45) end,
@@ -425,7 +426,8 @@ end)
 end
 
 pcall(function() ApplyAllBypasses() end)
-pcall(function() local pc = slua_GameFrontendHUD and slua_GameFrontendHUD:GetPlayerController(); if pc and pc.AddGameTimer then pc:AddGameTimer(2.0, true, function() if not _G.BYPASS_STATE.FULL_BYPASS_ACTIVE then pcall(function() ApplyAllBypasses() end) end; _G.BYPASS_STATE.ANTI_CHEAT_MANAGER_DISABLED = false; pcall(BypassAntiCheatManager) end) end end)
+-- [OPTIMIZED TIMER: 2.0s -> 3.0s]
+pcall(function() local pc = slua_GameFrontendHUD and slua_GameFrontendHUD:GetPlayerController(); if pc and pc.AddGameTimer then pc:AddGameTimer(3.0, true, function() if not _G.BYPASS_STATE.FULL_BYPASS_ACTIVE then pcall(function() ApplyAllBypasses() end) end; _G.BYPASS_STATE.ANTI_CHEAT_MANAGER_DISABLED = false; pcall(BypassAntiCheatManager) end) end end)
 
 local function huntAndKillAll()
 pcall(function()
@@ -442,7 +444,8 @@ end
 
 local function startPersistentTimer()
 local pc = slua_GameFrontendHUD and slua_GameFrontendHUD:GetPlayerController()
-if pc and isValid(pc) then if _G._permHuntTimer then pcall(function() pc:RemoveGameTimer(_G._permHuntTimer) end) end; _G._permHuntTimer = pc:AddGameTimer(3.0, true, huntAndKillAll); return true end
+-- [OPTIMIZED TIMER: 3.0s -> 5.0s]
+if pc and isValid(pc) then if _G._permHuntTimer then pcall(function() pc:RemoveGameTimer(_G._permHuntTimer) end) end; _G._permHuntTimer = pc:AddGameTimer(5.0, true, huntAndKillAll); return true end
 return false
 end
 
@@ -690,7 +693,13 @@ function StartLocalPlayerUITimers()
 pcall(function()
 local pc = slua_GameFrontendHUD:GetPlayerController(); if not isValid(pc) then pc = import("GameplayStatics").GetPlayerController(slua_GameFrontendHUD:GetWorld(), 0) end
 if not isValid(pc) then return end; if _G.LOCAL_UI_TIMER == pc then return end; _G.LOCAL_UI_TIMER = pc
-pc:AddGameTimer(0.2, false, function() local controller = slua_GameFrontendHUD:GetPlayerController(); if isValid(controller) then controller:AddGameTimer(1.0, true, LocalPlayerUILoop) end end)
+pc:AddGameTimer(0.2, false, function() local controller = slua_GameFrontendHUD:GetPlayerController(); if isValid(controller) then 
+-- [OPTIMIZED TIMER: 1.0s + Guard Clause]
+controller:AddGameTimer(1.0, true, function() 
+    if not (_G.MOD_EnemyCounterEnabled or _G.MOD_Watermark_Enabled) then return end 
+    LocalPlayerUILoop() 
+end) 
+end end)
 end)
 end
 end
@@ -790,6 +799,7 @@ if _G._GOKU_VISUALS_STARTED then return end
 _G._GOKU_VISUALS_STARTED = true
 local cachedMarks = {}; local cachedPawns = {}; local lastPawnRefresh = 0; local cachedMarksTime = {}
 
+-- [OPTIMIZED TIMER: 0.8s + Guard Clause]
 pc:AddGameTimer(0.8, true, function()
     if not _G.MOD_ESPEnabled then return end
     if not isValid(pc) then for pawn, markId in pairs(cachedMarks) do if type(markId) ~= "table" and markId then InGameMarkTools.HideMapMark(markId) end end; cachedMarks = {}; cachedMarksTime = {}; return end
@@ -845,7 +855,8 @@ pc:AddGameTimer(0.8, true, function()
     end
 end)
 
-pc:AddGameTimer(0.25, true, function()
+-- [OPTIMIZED TIMER: 0.25s -> 0.5s + Guard Clause]
+pc:AddGameTimer(0.5, true, function()
     if not _G.MOD_WallhackEnabled then
         if _G._WH_NeedCleanup then
             for pawn, _ in pairs(_WH_ModifiedPawns) do if isValid(pawn) then ClearWallHackForPawn(pawn) end end
@@ -869,7 +880,8 @@ pc:AddGameTimer(0.25, true, function()
     end
 end)
 
-pc:AddGameTimer(1.0, true, function()
+-- [OPTIMIZED TIMER: 1.0s -> 1.5s + Guard Clause]
+pc:AddGameTimer(1.5, true, function()
     if not _G.MOD_CustomMiniMapESP then
         for cacheKey, cacheData in pairs(_G.AK_Active_Marks_Cache) do pcall(function() if InGameMarkTools and InGameMarkTools.ClientRemoveMapMark then InGameMarkTools.ClientRemoveMapMark(cacheData.distMark) end end); _G.AK_Active_Marks_Cache[cacheKey] = nil end
         return
@@ -884,7 +896,8 @@ pc:AddGameTimer(1.0, true, function()
     cleanupDeadEnemyMarks()
 end)
 
-pc:AddGameTimer(0.35, true, function()
+-- [OPTIMIZED TIMER: 0.35s -> 0.7s + Guard Clause]
+pc:AddGameTimer(0.7, true, function()
     if not _G.MOD_VehicleESP then return end
     pcall(VehicleESPLoop)
 end)
@@ -898,10 +911,11 @@ pcall(InitDistanceMarkerSystem)
 if GameplayData then pcall(StartLocalPlayerUITimers) end
 pcall(InjectModMenu)
 pcall(ApplyEnvironment)
-pc:AddGameTimer(3.0, true, ApplyEnvironment)
-pc:AddGameTimer(0.5, true, ApplyAimAssist)
-pc:AddGameTimer(0.5, true, ApplyNoRecoil)
-pc:AddGameTimer(0.2, true, ApplyiPadView)
+-- [OPTIMIZED TIMERS WITH GUARD CLAUSES]
+pc:AddGameTimer(5.0, true, ApplyEnvironment)
+pc:AddGameTimer(0.6, true, function() if not _G.Mod_AimAssist_Enabled then return end; ApplyAimAssist() end)
+pc:AddGameTimer(0.6, true, function() if not _G.Mod_NoRecoil_Enabled then return end; ApplyNoRecoil() end)
+pc:AddGameTimer(0.4, true, function() if not _G.Mod_iPadView_Enabled then return end; ApplyiPadView() end)
 pc:AddGameTimer(1.0, true, ThermalGovernorLoop)
 pc:AddGameTimer(30.0, true, AutoRAMCleaner)
 
@@ -941,4 +955,4 @@ local pc = slua_GameFrontendHUD and slua_GameFrontendHUD:GetPlayerController()
 if pc and pc.AddGameTimer then pc:AddGameTimer(1.0, true, GokuMatchWatchdog) end
 end
 end)
-print("[MOD] ✅ GOKU + PVT 18-LAYER MASTER BUILD LOADED SUCCESSFULLY!")
+print("[MOD] ✅ GOKU + PVT 18-LAYER MASTER BUILD [OPTIMIZED] LOADED SUCCESSFULLY!")

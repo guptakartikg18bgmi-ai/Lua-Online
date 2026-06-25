@@ -1,5 +1,5 @@
 -- ============================================================================
--- ✦ GOKU FRAMEWORK + PVT 18-LAYER BYPASS [MASTER BUILD - OPTIMIZED] ✦
+-- ✦ GOKU FRAMEWORK + PVT 18-LAYER BYPASS [MASTER BUILD - FINAL FIX] ✦
 -- ============================================================================
 
 if not _G.GOKU_ONE_TIME_INIT_DONE then
@@ -372,7 +372,6 @@ end)
 return false
 end
 pcall(function() TssSdkBypass() end)
--- [OPTIMIZED TIMER: 1.0s -> 1.5s]
 pcall(function() local pc = slua_GameFrontendHUD and slua_GameFrontendHUD:GetPlayerController(); if slua.isValid(pc) and pc.AddGameTimer then pc:AddGameTimer(1.5, true, function() pcall(TssSdkBypass) end) end end)
 
 local FakeData = {
@@ -426,7 +425,6 @@ end)
 end
 
 pcall(function() ApplyAllBypasses() end)
--- [OPTIMIZED TIMER: 2.0s -> 3.0s]
 pcall(function() local pc = slua_GameFrontendHUD and slua_GameFrontendHUD:GetPlayerController(); if pc and pc.AddGameTimer then pc:AddGameTimer(3.0, true, function() if not _G.BYPASS_STATE.FULL_BYPASS_ACTIVE then pcall(function() ApplyAllBypasses() end) end; _G.BYPASS_STATE.ANTI_CHEAT_MANAGER_DISABLED = false; pcall(BypassAntiCheatManager) end) end end)
 
 local function huntAndKillAll()
@@ -444,7 +442,6 @@ end
 
 local function startPersistentTimer()
 local pc = slua_GameFrontendHUD and slua_GameFrontendHUD:GetPlayerController()
--- [OPTIMIZED TIMER: 3.0s -> 5.0s]
 if pc and isValid(pc) then if _G._permHuntTimer then pcall(function() pc:RemoveGameTimer(_G._permHuntTimer) end) end; _G._permHuntTimer = pc:AddGameTimer(5.0, true, huntAndKillAll); return true end
 return false
 end
@@ -507,6 +504,7 @@ pcall(function() if type(enemy.IsDead) == "function" then isDead = enemy:IsDead(
 if not isDead then if not enemy.bHasAKNativeMapMarker then createDistanceMarker(enemy); enemy.bHasAKNativeMapMarker = true end else if enemy.bHasAKNativeMapMarker then removeDistanceMarker(enemy); enemy.bHasAKNativeMapMarker = false end end
 end
 
+-- [FIXED VEHICLE ESP BLINKING: Timer 0.45s, Duration 1.0s]
 local function VehicleESPLoop()
 if not _G.MOD_VehicleESP then return end
 local pc = slua_GameFrontendHUD:GetPlayerController(); if not isValid(pc) then return end
@@ -517,7 +515,7 @@ if not _G._VehicleCacheTime or os.clock() - _G._VehicleCacheTime > 1.0 then _G._
 for _, vehicle in pairs(_G._VehicleCache) do
 if isValid(vehicle) then
 local vPos = vehicle:K2_GetActorLocation(); local dx = vPos.X - myPos.X; local dy = vPos.Y - myPos.Y; local dz = vPos.Z - myPos.Z; local distSq = dx * dx + dy * dy + dz * dz
-if distSq < 900000000 then local dist = math.sqrt(distSq); local distText = string.format("[%.0fm]", dist / 100); HUD:AddDebugText("Vehicle " .. distText, vehicle, 0.35, { X = 0, Y = 0, Z = 100 }, { X = 0, Y = 0, Z = 100 }, { R = 255, G = 255, B = 0, A = 255 }, true, false, true, nil, 1.0, true) end
+if distSq < 900000000 then local dist = math.sqrt(distSq); local distText = string.format("[%.0fm]", dist / 100); HUD:AddDebugText("Vehicle " .. distText, vehicle, 1.0, { X = 0, Y = 0, Z = 100 }, { X = 0, Y = 0, Z = 100 }, { R = 255, G = 255, B = 0, A = 255 }, true, false, true, nil, 1.0, true) end
 end
 end
 end
@@ -618,14 +616,26 @@ end
 local aimOriginalCache = setmetatable({}, { __mode = "k" })
 local AIM_BASE_VALUES = { Speed = 8.1, RangeRate = 1.8, SpeedRate = 2.5, RangeRateSight = 5.5, SpeedRateSight = 1.4, CrouchRate = 1.2, ProneRate = 1.1, DyingRate = 0 }
 
+-- [FIXED AIM ASSIST TOGGLE BUG: Restores original values when turned OFF]
 local function ApplyAimAssist()
-if not _G.Mod_AimAssist_Enabled then return end
 pcall(function()
 local pc = slua_GameFrontendHUD:GetPlayerController(); if not isValid(pc) then return end
 local char = pc:GetPlayerCharacterSafety(); if not isValid(char) then return end
 local wm = char.WeaponManagerComponent; if not wm then return end
 local weapon = wm.CurrentWeaponReplicated; if not weapon then return end
 local entity = weapon.ShootWeaponEntityComp; if not isValid(entity) or not entity.AutoAimingConfig then return end
+
+if not _G.Mod_AimAssist_Enabled then
+    if aimOriginalCache[entity] then
+        for _, range in ipairs({"OuterRange", "InnerRange"}) do
+            local cfg = entity.AutoAimingConfig[range]
+            local saved = aimOriginalCache[entity][range]
+            if cfg and saved then for k, v in pairs(saved) do cfg[k] = v end end
+        end
+    end
+    return
+end
+
 local currentState = tostring(_G.Mod_AimAssist_Enabled) .. tostring(_G.AimAssist_Power)
 if entity == _G.LastAimEntity and currentState == _G.LastAimState then return end
 _G.LastAimEntity = entity; _G.LastAimState = currentState
@@ -640,14 +650,29 @@ local RECOIL_TARGET_VALUES = { RecoilKick = 0.18, RecoilKickADS = 0.14, Animatio
 local RECOIL_INFO_FIELDS = {"VerticalRecoilMin", "VerticalRecoilMax", "RecoilSpeedVertical", "RecoilSpeedHorizontal", "VerticalRecoveryMax"}
 local RECOIL_INFO_TARGET = { VerticalRecoilMin = 0.3, VerticalRecoilMax = 0.4, RecoilSpeedVertical = 0.2, RecoilSpeedHorizontal = 0.4, VerticalRecoveryMax = 0.1 }
 
+-- [FIXED NO RECOIL TOGGLE BUG: Restores original values when turned OFF]
 local function ApplyNoRecoil()
-if not _G.Mod_NoRecoil_Enabled then return end
 pcall(function()
 local pc = slua_GameFrontendHUD:GetPlayerController(); if not isValid(pc) then return end
 local char = pc:GetPlayerCharacterSafety(); if not isValid(char) then return end
 local wm = char.WeaponManagerComponent; if not wm then return end
 local weapon = wm.CurrentWeaponReplicated; if not weapon then return end
 local entity = weapon.ShootWeaponEntityComp; if not isValid(entity) then return end
+
+if not _G.Mod_NoRecoil_Enabled then
+    if recoilOriginalCache[entity] then
+        local saved = recoilOriginalCache[entity]
+        for k, v in pairs(saved) do
+            if k == "RecoilInfo" then
+                if entity.RecoilInfo then for rk, rv in pairs(v) do entity.RecoilInfo[rk] = rv end end
+            elseif k == "ShootCameraShakeScale" then
+                if entity.ShootCameraShake then entity.ShootCameraShake.Scale = v end
+            else entity[k] = v end
+        end
+    end
+    return
+end
+
 if entity == _G.LastRecoilEntity and _G.Mod_NoRecoil_Enabled == _G.LastRecoilState then return end
 _G.LastRecoilEntity = entity; _G.LastRecoilState = _G.Mod_NoRecoil_Enabled
 if not recoilOriginalCache[entity] then local saved = { RecoilInfo = {} }; for _, f in ipairs(RECOIL_FIELDS) do if entity[f] ~= nil then saved[f] = entity[f] end end; if entity.RecoilInfo then for _, f in ipairs(RECOIL_INFO_FIELDS) do if entity.RecoilInfo[f] ~= nil then saved.RecoilInfo[f] = entity.RecoilInfo[f] end end end; if entity.ShootCameraShake then saved.ShootCameraShakeScale = entity.ShootCameraShake.Scale end; recoilOriginalCache[entity] = saved end
@@ -658,12 +683,18 @@ end)
 end
 
 local ipadViewOrigCache = setmetatable({}, { __mode = "k" })
+
+-- [FIXED IPAD VIEW TOGGLE BUG: Restores original FOV when turned OFF]
 local function ApplyiPadView()
-if not _G.Mod_iPadView_Enabled then return end
 pcall(function()
 local pc = slua_GameFrontendHUD:GetPlayerController(); if not isValid(pc) then return end
 local char = pc:GetPlayerCharacterSafety(); if not isValid(char) or not char.ThirdPersonCameraComponent then return end
-local cam = char.ThirdPersonCameraComponent; if not ipadViewOrigCache[char] then ipadViewOrigCache[char] = cam.FieldOfView or 90 end
+local cam = char.ThirdPersonCameraComponent; 
+if not _G.Mod_iPadView_Enabled then 
+    if ipadViewOrigCache[char] then cam.FieldOfView = ipadViewOrigCache[char] end
+    return 
+end
+if not ipadViewOrigCache[char] then ipadViewOrigCache[char] = cam.FieldOfView or 90 end
 local isAiming = false; pcall(function() isAiming = char.bIsTargeting end); if isAiming then return end
 local targetFov = _G.iPadView_FOV_Slider or 110; if cam.FieldOfView ~= targetFov then cam.FieldOfView = targetFov end
 end)
@@ -671,20 +702,38 @@ end
 
 if GameplayData then
 local COLOR_SAFE = { R = 0, G = 255, B = 200, A = 255 }; local COLOR_WARN = { R = 255, G = 150, B = 0, A = 255 }; local COLOR_DANGER = { R = 255, G = 20, B = 60, A = 255 }
-local TEXT_OFFSET = { X = 0, Y = 0, Z = 35 }; local WATERMARK_OFFSET = { X = 0, Y = 0, Z = -10 }; local TEXT_SCALE = 1.05; local MAX_DIST_SQ = 900000000
+local TEXT_OFFSET = { X = 0, Y = 0, Z = 35 }; local TEXT_SCALE = 1.05; local MAX_DIST_SQ = 900000000
 
+-- [MERGED WATERMARK & ENEMY COUNTER: Saves 1 Draw Call, Better Performance]
 function LocalPlayerUILoop()
 pcall(function()
 if not (_G.MOD_EnemyCounterEnabled or _G.MOD_Watermark_Enabled) then return end
 local player = GameplayData.GetPlayerCharacter(); if not isValid(player) then return end
 local pc = slua_GameFrontendHUD:GetPlayerController(); if not isValid(pc) then return end
 local hud = pc:GetHUD(); if not isValid(hud) then return end
-if _G.MOD_Watermark_Enabled then hud:AddDebugText("✦ REAL DEV GOKUCONFIG ✦", player, 1.1, WATERMARK_OFFSET, WATERMARK_OFFSET, { R = 0, G = 255, B = 255, A = 255 }, true, false, true, nil, 0.8, true) end
+
+local myTeamId = player.TeamID or 0; local myPos = player:K2_GetActorLocation(); local enemyCount = 0; 
 if _G.MOD_EnemyCounterEnabled then
-local myTeamId = player.TeamID or 0; local myPos = player:K2_GetActorLocation(); local enemyCount = 0; local allPawns = Game:GetAllPlayerPawns() or {}
-for _, pawn in pairs(allPawns) do if isValid(pawn) and pawn ~= player and (pawn.TeamID or 0) ~= myTeamId then local pos = pawn:K2_GetActorLocation(); local dx = pos.X - myPos.X; local dy = pos.Y - myPos.Y; local dz = pos.Z - myPos.Z; if (dx * dx + dy * dy + dz * dz) <= MAX_DIST_SQ then enemyCount = enemyCount + 1 end end end
-local text, color; if enemyCount == 0 then text = "[ AREA SECURE ]"; color = COLOR_SAFE elseif enemyCount == 1 then text = "! WARNING : 1 ENEMY !"; color = COLOR_WARN else text = "[ DANGER : " .. enemyCount .. " ENEMIES ]"; color = COLOR_DANGER end
-hud:AddDebugText(text, player, 1.1, TEXT_OFFSET, TEXT_OFFSET, color, true, false, true, nil, TEXT_SCALE, true)
+    local allPawns = Game:GetAllPlayerPawns() or {}
+    for _, pawn in pairs(allPawns) do if isValid(pawn) and pawn ~= player and (pawn.TeamID or 0) ~= myTeamId then local pos = pawn:K2_GetActorLocation(); local dx = pos.X - myPos.X; local dy = pos.Y - myPos.Y; local dz = pos.Z - myPos.Z; if (dx * dx + dy * dy + dz * dz) <= MAX_DIST_SQ then enemyCount = enemyCount + 1 end end end
+end
+
+local text = ""
+local color = COLOR_SAFE
+
+if _G.MOD_EnemyCounterEnabled then
+    if enemyCount == 0 then text = "[ AREA SECURE ]"; color = COLOR_SAFE 
+    elseif enemyCount == 1 then text = "! WARNING : 1 ENEMY !"; color = COLOR_WARN 
+    else text = "[ DANGER : " .. enemyCount .. " ENEMIES ]"; color = COLOR_DANGER end
+end
+
+if _G.MOD_Watermark_Enabled then
+    if text ~= "" then text = text .. "\n✦ REAL DEV GOKUCONFIG ✦"
+    else text = "✦ REAL DEV GOKUCONFIG ✦"; color = { R = 0, G = 255, B = 255, A = 255 } end
+end
+
+if text ~= "" then
+    hud:AddDebugText(text, player, 1.1, TEXT_OFFSET, TEXT_OFFSET, color, true, false, true, nil, TEXT_SCALE, true)
 end
 end)
 end
@@ -694,7 +743,6 @@ pcall(function()
 local pc = slua_GameFrontendHUD:GetPlayerController(); if not isValid(pc) then pc = import("GameplayStatics").GetPlayerController(slua_GameFrontendHUD:GetWorld(), 0) end
 if not isValid(pc) then return end; if _G.LOCAL_UI_TIMER == pc then return end; _G.LOCAL_UI_TIMER = pc
 pc:AddGameTimer(0.2, false, function() local controller = slua_GameFrontendHUD:GetPlayerController(); if isValid(controller) then 
--- [OPTIMIZED TIMER: 1.0s + Guard Clause]
 controller:AddGameTimer(1.0, true, function() 
     if not (_G.MOD_EnemyCounterEnabled or _G.MOD_Watermark_Enabled) then return end 
     LocalPlayerUILoop() 
@@ -799,7 +847,6 @@ if _G._GOKU_VISUALS_STARTED then return end
 _G._GOKU_VISUALS_STARTED = true
 local cachedMarks = {}; local cachedPawns = {}; local lastPawnRefresh = 0; local cachedMarksTime = {}
 
--- [OPTIMIZED TIMER: 0.8s + Guard Clause]
 pc:AddGameTimer(0.8, true, function()
     if not _G.MOD_ESPEnabled then return end
     if not isValid(pc) then for pawn, markId in pairs(cachedMarks) do if type(markId) ~= "table" and markId then InGameMarkTools.HideMapMark(markId) end end; cachedMarks = {}; cachedMarksTime = {}; return end
@@ -855,7 +902,6 @@ pc:AddGameTimer(0.8, true, function()
     end
 end)
 
--- [OPTIMIZED TIMER: 0.25s -> 0.5s + Guard Clause]
 pc:AddGameTimer(0.5, true, function()
     if not _G.MOD_WallhackEnabled then
         if _G._WH_NeedCleanup then
@@ -880,7 +926,6 @@ pc:AddGameTimer(0.5, true, function()
     end
 end)
 
--- [OPTIMIZED TIMER: 1.0s -> 1.5s + Guard Clause]
 pc:AddGameTimer(1.5, true, function()
     if not _G.MOD_CustomMiniMapESP then
         for cacheKey, cacheData in pairs(_G.AK_Active_Marks_Cache) do pcall(function() if InGameMarkTools and InGameMarkTools.ClientRemoveMapMark then InGameMarkTools.ClientRemoveMapMark(cacheData.distMark) end end); _G.AK_Active_Marks_Cache[cacheKey] = nil end
@@ -896,8 +941,7 @@ pc:AddGameTimer(1.5, true, function()
     cleanupDeadEnemyMarks()
 end)
 
--- [OPTIMIZED TIMER: 0.35s -> 0.7s + Guard Clause]
-pc:AddGameTimer(0.7, true, function()
+pc:AddGameTimer(0.45, true, function()
     if not _G.MOD_VehicleESP then return end
     pcall(VehicleESPLoop)
 end)
@@ -911,11 +955,10 @@ pcall(InitDistanceMarkerSystem)
 if GameplayData then pcall(StartLocalPlayerUITimers) end
 pcall(InjectModMenu)
 pcall(ApplyEnvironment)
--- [OPTIMIZED TIMERS WITH GUARD CLAUSES]
 pc:AddGameTimer(5.0, true, ApplyEnvironment)
-pc:AddGameTimer(0.6, true, function() if not _G.Mod_AimAssist_Enabled then return end; ApplyAimAssist() end)
-pc:AddGameTimer(0.6, true, function() if not _G.Mod_NoRecoil_Enabled then return end; ApplyNoRecoil() end)
-pc:AddGameTimer(0.4, true, function() if not _G.Mod_iPadView_Enabled then return end; ApplyiPadView() end)
+pc:AddGameTimer(0.6, true, ApplyAimAssist)
+pc:AddGameTimer(0.6, true, ApplyNoRecoil)
+pc:AddGameTimer(0.4, true, ApplyiPadView)
 pc:AddGameTimer(1.0, true, ThermalGovernorLoop)
 pc:AddGameTimer(30.0, true, AutoRAMCleaner)
 
@@ -955,4 +998,4 @@ local pc = slua_GameFrontendHUD and slua_GameFrontendHUD:GetPlayerController()
 if pc and pc.AddGameTimer then pc:AddGameTimer(1.0, true, GokuMatchWatchdog) end
 end
 end)
-print("[MOD] ✅ GOKU + PVT 18-LAYER MASTER BUILD [OPTIMIZED] LOADED SUCCESSFULLY!")
+print("[MOD] ✅ GOKU + PVT 18-LAYER MASTER BUILD [FINAL FIX] LOADED SUCCESSFULLY!")

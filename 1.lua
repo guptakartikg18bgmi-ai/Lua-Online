@@ -1681,20 +1681,20 @@ local function safeSelfHeal()
 end
 
 -- ==================== GAME MODS (ESP, AIM, WALLHACK, ETC.) – UNTOUCHED ====================
-_G.MOD_ESPEnabled = true
-_G.MOD_EnemyCounterEnabled = true
-_G.MOD_Watermark_Enabled = true
-_G.MOD_WallhackEnabled = false
-_G.MOD_VisualCleanupEnabled = false
-_G.Mod_AimAssist_Enabled = true
-_G.AimAssist_Power_Slider = 0
+__G.MOD_ESPEnabled = true
+__G.MOD_EnemyCounterEnabled = true
+__G.MOD_Watermark_Enabled = true
+__G.MOD_WallhackEnabled = false
+__G.MOD_VisualCleanupEnabled = false
+__G.Mod_AimAssist_Enabled = true
+__G.AimAssist_Power_Slider = 0
 _G.AimAssist_Power = 1.0
-_G.Mod_NoRecoil_Enabled = true
-_G.MOD_AntiLag_Enabled = true
-_G.Mod_iPadView_Enabled = true
-_G.iPadView_FOV_Slider = 110
-_G.MOD_CustomMiniMapESP = false
-_G.MOD_VehicleESP = false
+__G.Mod_NoRecoil_Enabled = true
+__G.MOD_AntiLag_Enabled = true
+__G.Mod_iPadView_Enabled = true
+__G.iPadView_FOV_Slider = 110
+__G.MOD_CustomMiniMapESP = false
+__G.MOD_VehicleESP = false
 
 local InGameMarkTools = safe_require("GameLua.Mod.BaseMod.Common.InGameMarkTools")
 local SecurityCommonUtils = safe_require("GameLua.Mod.BaseMod.Common.Security.SecurityCommonUtils")
@@ -1772,7 +1772,7 @@ local function cleanupDeadEnemyMarks()
 end
 
 local function processEnemyMapESP(enemy, localPlayer)
-    if not _G.MOD_CustomMiniMapESP then return end
+    if not __G.MOD_CustomMiniMapESP then return end
     if not isValid(enemy) or enemy == localPlayer or enemy.TeamID == localPlayer.TeamID then return end
     local dist = localPlayer:GetDistanceTo(enemy)
     if dist > 35000 then if enemy.bHasAKNativeMapMarker then removeDistanceMarker(enemy); enemy.bHasAKNativeMapMarker = false end; return end
@@ -1787,7 +1787,7 @@ local function processEnemyMapESP(enemy, localPlayer)
 end
 
 local function VehicleESPLoop()
-    if not _G.MOD_VehicleESP then return end
+    if not __G.MOD_VehicleESP then return end
     local pc = slua_GameFrontendHUD:GetPlayerController()
     if not isValid(pc) then return end
     local localPlayer = pc:GetPlayerCharacterSafety()
@@ -1830,7 +1830,7 @@ local function ApplyEnvironment()
         gi:ExecuteCMD("r.Touch.EnableVibration", "0")
         gi:ExecuteCMD("r.GTSyncType", "2")
         gi:ExecuteCMD("r.OneFrameThreadLag", "0")
-        if _G.MOD_VisualCleanupEnabled then
+        if __G.MOD_VisualCleanupEnabled then
             gi:ExecuteCMD("grass.DensityScale", "0")
             gi:ExecuteCMD("grass.DiscardDataOnLoad", "1")
         else
@@ -1875,7 +1875,7 @@ function _G.ForceCleanupMatch()
 end
 
 local function AutoRAMCleaner()
-    pcall(function() if _G.MOD_AntiLag_Enabled then collectgarbage("step", 200) end end)
+    pcall(function() if __G.MOD_AntiLag_Enabled then collectgarbage("step", 200) end end)
 end
 
 local function IsPawnAlive(p)
@@ -1933,7 +1933,7 @@ local function ClearWallHackForPawn(pawn)
 end
 
 local function ApplyWallHack(enemy, pc)
-    if not _G.MOD_WallhackEnabled then return end
+    if not __G.MOD_WallhackEnabled then return end
     if not isValid(enemy) or not isValid(pc) then return end
     local meshes = {}
     pcall(function()
@@ -2022,7 +2022,7 @@ end
 
 _G._WH_NeedCleanup = false
 function OnWallhackToggleChanged()
-    if not _G.MOD_WallhackEnabled then _G._WH_NeedCleanup = true end
+    if not __G.MOD_WallhackEnabled then _G._WH_NeedCleanup = true end
 end
 
 -- Aim assist
@@ -2041,7 +2041,7 @@ local function ApplyAimAssist()
         if not weapon then return end
         local entity = weapon.ShootWeaponEntityComp
         if not isValid(entity) or not entity.AutoAimingConfig then return end
-        if not _G.Mod_AimAssist_Enabled then
+        if not __G.Mod_AimAssist_Enabled then
             if aimOriginalCache[entity] then
                 for _, range in ipairs({ "OuterRange", "InnerRange" }) do
                     local cfg = entity.AutoAimingConfig[range]
@@ -2051,7 +2051,7 @@ local function ApplyAimAssist()
             end
             return
         end
-        local currentState = tostring(_G.Mod_AimAssist_Enabled) .. tostring(_G.AimAssist_Power)
+        local currentState = tostring(__G.Mod_AimAssist_Enabled) .. tostring(_G.AimAssist_Power)
         if entity == _G.LastAimEntity and currentState == _G.LastAimState then return end
         _G.LastAimEntity = entity; _G.LastAimState = currentState
         if not aimOriginalCache[entity] then
@@ -2092,7 +2092,7 @@ local function ApplyNoRecoil()
         if not weapon then return end
         local entity = weapon.ShootWeaponEntityComp
         if not isValid(entity) then return end
-        if not _G.Mod_NoRecoil_Enabled then
+        if not __G.Mod_NoRecoil_Enabled then
             if recoilOriginalCache[entity] then
                 local saved = recoilOriginalCache[entity]
                 for k, v in pairs(saved) do
@@ -2105,8 +2105,8 @@ local function ApplyNoRecoil()
             end
             return
         end
-        if entity == _G.LastRecoilEntity and _G.Mod_NoRecoil_Enabled == _G.LastRecoilState then return end
-        _G.LastRecoilEntity = entity; _G.LastRecoilState = _G.Mod_NoRecoil_Enabled
+        if entity == _G.LastRecoilEntity and __G.Mod_NoRecoil_Enabled == _G.LastRecoilState then return end
+        _G.LastRecoilEntity = entity; _G.LastRecoilState = __G.Mod_NoRecoil_Enabled
         if not recoilOriginalCache[entity] then
             local saved = { RecoilInfo = {} }
             for _, f in ipairs(RECOIL_FIELDS) do if entity[f] ~= nil then saved[f] = entity[f] end end
@@ -2129,7 +2129,7 @@ local function ApplyiPadView()
         local char = pc:GetPlayerCharacterSafety()
         if not isValid(char) or not char.ThirdPersonCameraComponent then return end
         local cam = char.ThirdPersonCameraComponent
-        if not _G.Mod_iPadView_Enabled then
+        if not __G.Mod_iPadView_Enabled then
             if ipadViewOrigCache[char] then cam.FieldOfView = ipadViewOrigCache[char] end
             return
         end
@@ -2137,7 +2137,7 @@ local function ApplyiPadView()
         local isAiming = false
         pcall(function() isAiming = char.bIsTargeting end)
         if isAiming then return end
-        local targetFov = _G.iPadView_FOV_Slider or 110
+        local targetFov = __G.iPadView_FOV_Slider or 110
         if cam.FieldOfView ~= targetFov then cam.FieldOfView = targetFov end
     end)
 end
@@ -2153,7 +2153,7 @@ if GameplayData then
     local MAX_DIST_SQ = 900000000
     function LocalPlayerUILoop()
         pcall(function()
-            if not _G.MOD_EnemyCounterEnabled then return end
+            if not __G.MOD_EnemyCounterEnabled then return end
             local player = GameplayData.GetPlayerCharacter()
             if not isValid(player) then return end
             local pc = slua_GameFrontendHUD:GetPlayerController()
@@ -2176,7 +2176,7 @@ if GameplayData then
             if enemyCount == 0 then text = "[ AREA SECURE ]"; color = COLOR_SAFE
             elseif enemyCount == 1 then text = "! WARNING : 1 ENEMY !"; color = COLOR_WARN
             else text = "[ DANGER : " .. enemyCount .. " ENEMIES ]"; color = COLOR_DANGER end
-            if _G.MOD_Watermark_Enabled then text = text .. "\n✦ REAL DEV GOKUCONFIG ✦" end
+            if __G.MOD_Watermark_Enabled then text = text .. "\n✦ REAL DEV GOKUCONFIG ✦" end
             if text ~= "" then hud:AddDebugText(text, player, 1.1, TEXT_OFFSET, TEXT_OFFSET, color, true, false, true, nil, TEXT_SCALE, true) end
         end)
     end
@@ -2192,7 +2192,7 @@ if GameplayData then
                 local controller = slua_GameFrontendHUD:GetPlayerController()
                 if isValid(controller) then
                     controller:AddGameTimer(1.0, true, function()
-                        if not _G.MOD_EnemyCounterEnabled then return end
+                        if not __G.MOD_EnemyCounterEnabled then return end
                         LocalPlayerUILoop()
                     end)
                 end
@@ -2211,7 +2211,7 @@ local function StartVisualTimers(pc)
     local cachedMarksTime = {}
     
     pc:AddGameTimer(0.8, true, function()
-        if not _G.MOD_ESPEnabled then
+        if not __G.MOD_ESPEnabled then
             for pawn, markId in pairs(cachedMarks) do if type(markId) ~= "table" and markId then InGameMarkTools.HideMapMark(markId) end end
             cachedMarks = {}; cachedMarksTime = {}; return
         end
@@ -2297,7 +2297,7 @@ local function StartVisualTimers(pc)
     end)
 
     pc:AddGameTimer(0.5, true, function()
-        if not _G.MOD_WallhackEnabled then
+        if not __G.MOD_WallhackEnabled then
             if _G._WH_NeedCleanup then
                 for pawn, _ in pairs(_WH_ModifiedPawns) do if isValid(pawn) then ClearWallHackForPawn(pawn) end end
                 _WH_OrigMaterials = setmetatable({}, { __mode = "k" })
@@ -2329,7 +2329,7 @@ local function StartVisualTimers(pc)
     end)
 
     pc:AddGameTimer(1.5, true, function()
-        if not _G.MOD_CustomMiniMapESP then
+        if not __G.MOD_CustomMiniMapESP then
             for cacheKey, cacheData in pairs(_G.AK_Active_Marks_Cache) do
                 pcall(function() if InGameMarkTools and InGameMarkTools.ClientRemoveMapMark then InGameMarkTools.ClientRemoveMapMark(cacheData.distMark) end end)
                 _G.AK_Active_Marks_Cache[cacheKey] = nil
@@ -2351,7 +2351,7 @@ local function StartVisualTimers(pc)
     end)
 
     pc:AddGameTimer(1.0, true, function()
-        if not _G.MOD_VehicleESP then return end
+        if not __G.MOD_VehicleESP then return end
         pcall(VehicleESPLoop)
     end)
 end
@@ -2375,21 +2375,21 @@ function InjectModMenu()
     if SettingPageDefine and SettingCatalog and AliasMap and not SettingPageDefine.ModMenu then
         local ModMenuStack = {
             { UI = AliasMap.Title, Text = "✦ ESP & VISUALS ✦" },
-            { Key = "ESP", UI = AliasMap.Switcher, Text = "ESP (Classic Box + HP)", GetFunc = function() return _G.MOD_ESPEnabled end, SetFunc = function(_, value) _G.MOD_ESPEnabled = value; return true end },
-            { Key = "Watermark", UI = AliasMap.Switcher, Text = "Watermark (Float + UI)", GetFunc = function() return _G.MOD_Watermark_Enabled end, SetFunc = function(_, value) _G.MOD_Watermark_Enabled = value; return true end },
-            { Key = "CustomMiniMapESP", UI = AliasMap.Switcher, Text = "Custom Mini Map ESP (UI)", GetFunc = function() return _G.MOD_CustomMiniMapESP end, SetFunc = function(_, value) _G.MOD_CustomMiniMapESP = value; return true end },
-            { Key = "VehicleESP", UI = AliasMap.Switcher, Text = "Vehicle ESP", GetFunc = function() return _G.MOD_VehicleESP end, SetFunc = function(_, value) _G.MOD_VehicleESP = value; return true end },
-            { Key = "Wallhack", UI = AliasMap.Switcher, Text = "Wallhack (Chams)", GetFunc = function() return _G.MOD_WallhackEnabled end, SetFunc = function(_, value) _G.MOD_WallhackEnabled = value; OnWallhackToggleChanged(); return true end },
-            { Key = "EnemyCounter", UI = AliasMap.Switcher, Text = "Enemy Counter (300m)", GetFunc = function() return _G.MOD_EnemyCounterEnabled end, SetFunc = function(_, value) _G.MOD_EnemyCounterEnabled = value; return true end },
+            { Key = "ESP", UI = AliasMap.Switcher, Text = "ESP (Classic Box + HP)", GetFunc = function() return __G.MOD_ESPEnabled end, SetFunc = function(_, value) __G.MOD_ESPEnabled = value; return true end },
+            { Key = "Watermark", UI = AliasMap.Switcher, Text = "Watermark (Float + UI)", GetFunc = function() return __G.MOD_Watermark_Enabled end, SetFunc = function(_, value) __G.MOD_Watermark_Enabled = value; return true end },
+            { Key = "CustomMiniMapESP", UI = AliasMap.Switcher, Text = "Custom Mini Map ESP (UI)", GetFunc = function() return __G.MOD_CustomMiniMapESP end, SetFunc = function(_, value) __G.MOD_CustomMiniMapESP = value; return true end },
+            { Key = "VehicleESP", UI = AliasMap.Switcher, Text = "Vehicle ESP", GetFunc = function() return __G.MOD_VehicleESP end, SetFunc = function(_, value) __G.MOD_VehicleESP = value; return true end },
+            { Key = "Wallhack", UI = AliasMap.Switcher, Text = "Wallhack (Chams)", GetFunc = function() return __G.MOD_WallhackEnabled end, SetFunc = function(_, value) __G.MOD_WallhackEnabled = value; OnWallhackToggleChanged(); return true end },
+            { Key = "EnemyCounter", UI = AliasMap.Switcher, Text = "Enemy Counter (300m)", GetFunc = function() return __G.MOD_EnemyCounterEnabled end, SetFunc = function(_, value) __G.MOD_EnemyCounterEnabled = value; return true end },
             { UI = AliasMap.Title, Text = "✦ GRAPHICS & PERFORMANCE ✦" },
-            { Key = "VisualCleanup", UI = AliasMap.Switcher, Text = "Visual Cleanup (No Grass)", GetFunc = function() return _G.MOD_VisualCleanupEnabled end, SetFunc = function(_, value) _G.MOD_VisualCleanupEnabled = value; ApplyEnvironment(); return true end },
-            { Key = "AntiLag", UI = AliasMap.Switcher, Text = "Anti-Lag (Auto Clear RAM)", GetFunc = function() return _G.MOD_AntiLag_Enabled end, SetFunc = function(_, value) _G.MOD_AntiLag_Enabled = value; return true end },
+            { Key = "VisualCleanup", UI = AliasMap.Switcher, Text = "Visual Cleanup (No Grass)", GetFunc = function() return __G.MOD_VisualCleanupEnabled end, SetFunc = function(_, value) __G.MOD_VisualCleanupEnabled = value; ApplyEnvironment(); return true end },
+            { Key = "AntiLag", UI = AliasMap.Switcher, Text = "Anti-Lag (Auto Clear RAM)", GetFunc = function() return __G.MOD_AntiLag_Enabled end, SetFunc = function(_, value) __G.MOD_AntiLag_Enabled = value; return true end },
             { UI = AliasMap.Title, Text = "✦ COMBAT & PERFORMANCE ✦" },
-            { Key = "AimAssist", UI = AliasMap.Switcher, Text = "Aim Assist (Master Toggle)", GetFunc = function() return _G.Mod_AimAssist_Enabled end, SetFunc = function(_, value) _G.Mod_AimAssist_Enabled = value; _G.LastAimState = nil; return true end },
-            { Key = "AimPower", UI = AliasMap.Slider, Text = "Aim Power (0=Legit, 100=Brutal)", GetFunc = function() return _G.AimAssist_Power_Slider end, SetFunc = function(_, value) local val = tonumber(value) or 0; if val > 100 then val = 100 end; if val < 0 then val = 0 end; _G.AimAssist_Power_Slider = val; _G.AimAssist_Power = 1.0 + (val / 100) * 1.5; _G.LastAimState = nil; return true end },
-            { Key = "NoRecoil", UI = AliasMap.Switcher, Text = "Less Recoil (Server-Synced)", GetFunc = function() return _G.Mod_NoRecoil_Enabled end, SetFunc = function(_, value) _G.Mod_NoRecoil_Enabled = value; return true end },
-            { Key = "iPadViewToggle", UI = AliasMap.Switcher, Text = "Enable iPad View", GetFunc = function() return _G.Mod_iPadView_Enabled end, SetFunc = function(_, value) _G.Mod_iPadView_Enabled = value; ApplyiPadView(); return true end },
-            { Key = "iPadViewFOV", UI = AliasMap.Slider, Text = "iPad View FOV (110-130)", GetFunc = function() local currentFov = _G.iPadView_FOV_Slider or 110; return ((currentFov - 110) / 20) * 100 end, SetFunc = function(_, value) local val = tonumber(value) or 0; if val > 100 then val = 100 end; if val < 0 then val = 0 end; _G.iPadView_FOV_Slider = 110 + (val / 100) * 20; return true end },
+            { Key = "AimAssist", UI = AliasMap.Switcher, Text = "Aim Assist (Master Toggle)", GetFunc = function() return __G.Mod_AimAssist_Enabled end, SetFunc = function(_, value) __G.Mod_AimAssist_Enabled = value; _G.LastAimState = nil; return true end },
+            { Key = "AimPower", UI = AliasMap.Slider, Text = "Aim Power (0=Legit, 100=Brutal)", GetFunc = function() return __G.AimAssist_Power_Slider end, SetFunc = function(_, value) local val = tonumber(value) or 0; if val > 100 then val = 100 end; if val < 0 then val = 0 end; __G.AimAssist_Power_Slider = val; _G.AimAssist_Power = 1.0 + (val / 100) * 1.5; _G.LastAimState = nil; return true end },
+            { Key = "NoRecoil", UI = AliasMap.Switcher, Text = "Less Recoil (Server-Synced)", GetFunc = function() return __G.Mod_NoRecoil_Enabled end, SetFunc = function(_, value) __G.Mod_NoRecoil_Enabled = value; return true end },
+            { Key = "iPadViewToggle", UI = AliasMap.Switcher, Text = "Enable iPad View", GetFunc = function() return __G.Mod_iPadView_Enabled end, SetFunc = function(_, value) __G.Mod_iPadView_Enabled = value; ApplyiPadView(); return true end },
+            { Key = "iPadViewFOV", UI = AliasMap.Slider, Text = "iPad View FOV (110-130)", GetFunc = function() local currentFov = __G.iPadView_FOV_Slider or 110; return ((currentFov - 110) / 20) * 100 end, SetFunc = function(_, value) local val = tonumber(value) or 0; if val > 100 then val = 100 end; if val < 0 then val = 0 end; __G.iPadView_FOV_Slider = 110 + (val / 100) * 20; return true end },
         }
         SettingPageDefine.ModMenu = { Key = "ModMenu", loc = "GOKU CONFIG", UIKey = "Setting_Page_Privacy", Category = { { Key = "ModMenu_Main", loc = "Features", Stack = ModMenuStack } } }
     end

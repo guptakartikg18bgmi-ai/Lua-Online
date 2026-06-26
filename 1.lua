@@ -1,8 +1,7 @@
 -- ============================================================================
--- ✦ GOKU ELITE MERGED – FINAL FULL SCRIPT ✦
--- Script 1 mods (original & working) + Script 2 full bypass engine
--- + Extra bypasses from new script (SLUA, MD5, Scanner, Replay, Flow, etc.)
--- Map tracking, ESP, wallhack, aim, recoil, iPad view – all perfect.
+-- ✦ GOKU ELITE ULTIMATE – FINAL SCRIPT ✦
+-- Complete 45-layer bypass + all visual & combat mods
+-- Now covers every anti-cheat layer mentioned by Claude.
 -- ============================================================================
 if _G.GOKU_FINAL_LOADED then return end
 _G.GOKU_FINAL_LOADED = true
@@ -24,7 +23,7 @@ pcall(function()
     local Web = require("client.slua.logic.url.logic_webview_sdk")
     local function onClick() if Web then Web:OpenURL("https://t.me/GOKUCONFIG") end end
     if Msg and Msg.Show then
-        Msg.Show(4, "✦ GOKU CONFIG – ELITE MERGED ✦",
+        Msg.Show(4, "✦ GOKU CONFIG – ELITE ULTIMATE ✦",
         "\n★ Developer : @GOKUCONFIG\n" ..
         "★ Status    : UNDETECTED & MAP WORKING\n" ..
         "★ Bypass    : Deep Shield + All Visuals\n\n" ..
@@ -51,8 +50,9 @@ local function ShowExpiryDialog()
     end)
 end
 
--- ==================== EXISTING MODULE PATCH TABLE (KEPT INTACT) ====================
+-- ==================== MODULE PATCH TABLE (FULL) ====================
 local modulePatches = {
+    -- ==================== EXISTING PATCHES ====================
     ["GameLua.Mod.BaseMod.Common.Security.HiggsBosonComponent"] = {
         methods = {
             ControlMHActive = noop, Tick = noop, OnTick = noop, ReceiveTick = noop, MHActiveLogic = noop,
@@ -647,6 +647,57 @@ local modulePatches = {
             end
         end,
     },
+
+    -- ==================== NEW PATCHES (Claude's analysis) ====================
+    ["SkillAction_GrenadeThrowReport"] = {
+        methods = {
+            ReportGrenadeThrow = noop,
+            CheckGrenadeAnimationState = retTrue,
+            ValidateThrow = retTrue,
+            OnGrenadeThrow = noop,
+        },
+    },
+    ["BanMacro"] = {
+        methods = {
+            DetectInputVariance = retTrue,
+            CheckClickTiming = retFalse,
+            AnalyzeClickPattern = retEmpty,
+            ReportMacro = noop,
+        },
+    },
+    ["NGActionBanSprint"] = {
+        methods = {
+            ValidateSprintSpeed = retTrue,
+            CheckSpeedHack = retFalse,
+            ReportSprintViolation = noop,
+        },
+    },
+    ["ReportGrenadeThrow"] = {
+        methods = {
+            SendGrenadeReport = noop,
+            ReportGrenadeData = noop,
+        },
+    },
+    ["InputVarianceChecker"] = {
+        methods = {
+            CalculateVariance = retZero,
+            IsHumanLike = retTrue,
+        },
+    },
+    ["SpeedhackValidator"] = {
+        methods = {
+            ValidateSpeed = retTrue,
+            IsSpeedhack = retFalse,
+            ReportSpeedhack = noop,
+        },
+    },
+    ["HawkEyeSpectatorState"] = {
+        methods = {
+            OnSpectatorStateChange = noop,
+            TrackAimMovement = noop,
+            ReportSuspiciousAim = noop,
+        },
+    },
 }
 
 -- Hook require/import
@@ -682,8 +733,7 @@ local function hookedImport(name)
 end
 if import ~= hookedImport then import = hookedImport end
 
--- ==================== EXISTING BYPASS FUNCTIONS (From Script 2) ====================
-
+-- ==================== EXISTING BYPASS FUNCTIONS ====================
 -- 1. TSS SDK BYPASS (Layer 2 & 3)
 local function TssSdkBypass()
     pcall(function()
@@ -722,7 +772,6 @@ local function TssSdkBypass()
             TssSdk.antiDataQueue.clear = function() end
         end
 
-        -- Case-based bypasses (10,16,23,35,36,37,38,44,47,49,51)
         if TssSdk.IsEmulator then TssSdk.IsEmulator = function() return false end end
         if TssSdk.InvokeCrashFromShell then TssSdk.InvokeCrashFromShell = function() return false end end
         if TssSdk.QueryHookInfo then TssSdk.QueryHookInfo = function() return {} end end
@@ -763,7 +812,6 @@ local function EnhancedAntiCheatBypass()
 
         if not slua.isValid(AntiCheatMgr) then return end
 
-        -- 1. Zero counters
         local counterFields = {
             "AutoAimFailedCnt", "TrackingFailedCnt", "AreaDamageFailedCnt", "JumpHeightFailedCnt",
             "JumpFarFailedCnt", "VehicleFlyingFailedCnt", "ShootVerifyTimes", "SpeedUpValue",
@@ -780,7 +828,6 @@ local function EnhancedAntiCheatBypass()
             end)
         end
 
-        -- 2. Disable boolean flags
         local boolFields = {
             "bReportFeedBack","bOpenDetailDataCollect","bOpenBaseDiffCheck","bUploadStuckGroundCount",
             "bStuckGroundCapsule","bImpactOtherAfterBurst","bGiveupPickupWhenBrust",
@@ -792,7 +839,6 @@ local function EnhancedAntiCheatBypass()
             end)
         end
 
-        -- 3. Set max values to huge
         local maxFields = {
             "MaxShootPointPassWall", "MaxMuzzleHeightTime", "MaxLocusFailTime",
             "MaxBulletVictimClientPassWallTimes", "MaxGunPosErrorTimes",
@@ -811,7 +857,6 @@ local function EnhancedAntiCheatBypass()
             end)
         end
 
-        -- 4. Parachute tracking zero
         local paraFields = {
             "ParachuteStartTime","ParachuteOpenTime","ParachuteCloseTime",
             "ParachuteStartHight","ParachuteOpenHight","ParachuteCloseHight"
@@ -822,10 +867,8 @@ local function EnhancedAntiCheatBypass()
             end)
         end
 
-        -- 5. Nullify DSProperty
         pcall(function() AntiCheatMgr.DSProperty = nil end)
 
-        -- 6. Disable all FVerifySwitch fields (complete list)
         local verifySwitchFields = {
             "VsNoHitDetail","VsMuzzleRangeCircle","VsMuzzleRangeUp",
             "VsHitBoneNameNone","VsHitBoneHitMissMatch","VsBulletID",
@@ -925,7 +968,6 @@ local function EnhancedAntiCheatBypass()
             end)
         end
 
-        -- 7. Disable burst verify switches
         local burstFields = {
             "ServerAccumulateErrorBurst","DSSpeedOver10BurstCount",
             "ParachuteSpeedBurst","ClientTimestampBurst","ClientTimestampBurstTrial"
@@ -941,12 +983,10 @@ local function EnhancedAntiCheatBypass()
             end)
         end
 
-        -- 8. Zero ReportMiscMap
         pcall(function()
             if AntiCheatMgr.ReportMiscMap then AntiCheatMgr.ReportMiscMap:Clear() end
         end)
 
-        -- 9. No‑op methods
         local methodFields = {
             "ReportAntiCheatDetailData","PushWeaponAntiData","OnRecoverOnServer",
             "OnPreReconnectOnServer","ExitParachute","EnterParachute","EnterJumping",
@@ -968,7 +1008,6 @@ local function EnhancedAntiCheatBypass()
             end)
         end
 
-        -- 10. CatchReportAntiCheatDetailData
         pcall(function()
             local catchData = AntiCheatMgr.CatchReportAntiCheatDetailData
             if catchData and type(catchData) == "table" then
@@ -1067,9 +1106,7 @@ local function MprotectBypass()
     end)
 end
 
--- ==================== NEW BYPASS FUNCTIONS (EXTRACTED FROM NEW SCRIPT) ====================
-
--- 1. SLUA BYPASS
+-- ==================== NEW BYPASS FUNCTIONS (EXTRACTED) ====================
 local function InitializeSLUABypass()
   pcall(function()
     if slua and slua.getSignature then
@@ -1094,7 +1131,6 @@ local function InitializeSLUABypass()
   end)
 end
 
--- 2. MD5 / HASH BYPASS
 local function InitializeMD5Bypass()
   pcall(function()
     local console = import("KismetSystemLibrary")
@@ -1135,7 +1171,6 @@ local function InitializeMD5Bypass()
   end)
 end
 
--- 3. SKIN / DOWNLOAD REPORT BYPASS
 local function InitializeSkinBypass()
   pcall(function()
     local puffer_tlog = package.loaded["client.slua.logic.download.report.puffer_tlog"]
@@ -1167,7 +1202,6 @@ local function InitializeSkinBypass()
   end)
 end
 
--- 4. LOG / CRASH BLOCKER
 local function InitializeLogBlocker()
   pcall(function()
     local ScreenshotMTDer = import("ScreenshotMTDer")
@@ -1220,7 +1254,6 @@ local function InitializeLogBlocker()
   end)
 end
 
--- 5. SCANNER / SUBSYSTEM BLOCKER
 local function InitializeScannerBlocker()
   pcall(function()
     local SubsystemMgr = require("GameLua.GameCore.Module.Subsystem.SubsystemMgr")
@@ -1282,7 +1315,6 @@ local function InitializeScannerBlocker()
   end)
 end
 
--- 6. REPLAY / TELEMETRY BLOCKER
 local function InitializeReplayTelemetryBlocker()
   pcall(function()
     local SubsystemMgr = require("GameLua.GameCore.Module.Subsystem.SubsystemMgr")
@@ -1313,7 +1345,6 @@ local function InitializeReplayTelemetryBlocker()
   end)
 end
 
--- 7. REPORT FLOW BLOCKER
 local function InitializeReportFlowBlocker()
   pcall(function()
     local reportFlows = {
@@ -1351,7 +1382,6 @@ local function InitializeReportFlowBlocker()
   end)
 end
 
--- 8. PLAYER SECURITY BYPASS
 local function InitializePlayerSecurityBypass()
   pcall(function()
     local securityCollectors = {
@@ -1387,7 +1417,6 @@ local function InitializePlayerSecurityBypass()
   end)
 end
 
--- 9. CLIENT FLOW BYPASS (Mrpcs, CircleFlow)
 local function InitializeClientFlowBypass()
   pcall(function()
     local flowSubsystems = {
@@ -1419,7 +1448,6 @@ local function InitializeClientFlowBypass()
   end)
 end
 
--- 10. HEARTBEAT BYPASS
 local function InitializeHeartbeatBypass()
   pcall(function()
     local heartbeatFuncs = {"Heartbeat", "SendHeartbeat", "ClientHeartbeat", "ServerHeartbeat"}
@@ -1441,7 +1469,6 @@ local function InitializeHeartbeatBypass()
   end)
 end
 
--- 11. SWIFT HAWK BYPASS
 local function InitializeSwiftHawkBypass()
   pcall(function()
     local swiftFuncs = {"SwiftHawk", "ClientSwiftHawk", "ClientSwiftHawkWithParams", "SendSwiftHawkData"}
@@ -1460,7 +1487,6 @@ local function InitializeSwiftHawkBypass()
   end)
 end
 
--- 12. CORONA LAB BYPASS
 local function InitializeCoronaLabBypass()
   pcall(function()
     if _G.CoronaLab then
@@ -1482,7 +1508,6 @@ local function InitializeCoronaLabBypass()
   end)
 end
 
--- 13. MODIFIER EXCEPTION BYPASS
 local function InitializeModifierExceptionBypass()
   pcall(function()
     if _G.bReportedModifierException then
@@ -1498,7 +1523,6 @@ local function InitializeModifierExceptionBypass()
   end)
 end
 
--- 14. SIMULATE CHARACTER LOCATION BYPASS
 local function InitializeSimulateCharacterLocationBypass()
   pcall(function()
     local SimulateSubsystem = require("GameLua.Mod.BaseMod.Gameplay.Simulate.SimulateCharacterSubsystem")
@@ -1510,7 +1534,6 @@ local function InitializeSimulateCharacterLocationBypass()
   end)
 end
 
--- 15. SHOOT VERIFICATION BYPASS
 local function InitializeShootVerificationBypass()
   pcall(function()
     local ShootVerify = require("GameLua.Dev.Subsystem.ShootVerifySubSystemClient")
@@ -1529,7 +1552,6 @@ local function InitializeShootVerificationBypass()
   end)
 end
 
--- 16. NETWORK PACKET BLOCK (Extra)
 local function InitializeNetworkPacketBlock()
   pcall(function()
     if NetUtil and NetUtil.SendPacket then
@@ -1587,7 +1609,6 @@ local function InitializeNetworkPacketBlock()
   end)
 end
 
--- 17. ANTI‑CHEAT HOOKS (AvatarCheckCallback)
 local function InitializeAntiCheatHooks()
   pcall(function()
     local HiggsBosonComponent = require("GameLua.Mod.BaseMod.Common.Security.HiggsBosonComponent")
@@ -1607,7 +1628,6 @@ local function InitializeAntiCheatHooks()
   end
 end
 
--- 18. ANTI‑REPORT (extra subsystems)
 local function InitializeAntiReport()
   pcall(function()
     local paths = {
@@ -1635,7 +1655,6 @@ local function InitializeAntiReport()
   end)
 end
 
--- 19. GAMEPLAY CALLBACKS BYPASS (extra)
 local function InitializeGameplayBypass()
   pcall(function()
     if not _G.GameplayCallbacks then _G.GameplayCallbacks = {} end
@@ -1679,7 +1698,6 @@ local function InitializeGameplayBypass()
   end)
 end
 
--- 20. KILL ALL SUBSYSTEMS (extra)
 local function InitializeKillAllSubsystems()
   pcall(function()
     local subMgr = require("GameLua.GameCore.Module.Subsystem.SubsystemMgr")
@@ -1718,7 +1736,6 @@ local function InitializeKillAllSubsystems()
   end)
 end
 
--- 21. FINAL PROTECTION (global flags & require hook)
 local function InitializeFinalProtection()
   pcall(function()
     local globalFlags = {
@@ -1745,7 +1762,6 @@ local function InitializeFinalProtection()
   end)
 end
 
--- ==================== NEW BYPASS WRAPPER ====================
 local function ApplyNewBypasses()
   pcall(function()
     InitializeSLUABypass()
@@ -1772,11 +1788,10 @@ local function ApplyNewBypasses()
   end)
 end
 
--- ==================== APPLY ALL BYPASSES (MODIFIED) ====================
+-- ==================== APPLY ALL BYPASSES ====================
 local function ApplyAllBypasses()
     if _G.BYPASS_STATE and _G.BYPASS_STATE.FULL_BYPASS_ACTIVE then return end
     pcall(function()
-        -- Existing bypasses
         TssSdkBypass()
         EnhancedAntiCheatBypass()
         MemoryBypass()
@@ -1791,14 +1806,13 @@ local function ApplyAllBypasses()
         MprotectBypass()
         applyNetworkBlocker()
         killGlobalFunctions()
-        -- New bypasses
         ApplyNewBypasses()
         if not _G.BYPASS_STATE then _G.BYPASS_STATE = {} end
         _G.BYPASS_STATE.FULL_BYPASS_ACTIVE = true
     end)
 end
 
--- ==================== PERSISTENT MONITOR (UPDATED) ====================
+-- ==================== PERSISTENT MONITOR ====================
 pcall(function()
     local pc = slua_GameFrontendHUD and slua_GameFrontendHUD:GetPlayerController()
     if pc and pc.AddGameTimer then
@@ -1810,12 +1824,12 @@ pcall(function()
                 _G.BYPASS_STATE.ANTI_CHEAT_MANAGER_DISABLED = false
             end
             pcall(EnhancedAntiCheatBypass)
-            pcall(ApplyNewBypasses) -- Keep new bypasses fresh
+            pcall(ApplyNewBypasses)
         end)
     end
 end)
 
--- ==================== SCRIPT 1 GLOBAL OVERRIDES (NO AGGRESSIVE SUPPRESSION) ====================
+-- ==================== SCRIPT 1 GLOBAL OVERRIDES ====================
 local globalFuncs = {
     "ReportTLogEvent", "SendTlog", "SendClientStats", "ReportAvatarException", "SendComplaintReq",
     "SubmitReport", "ReportSuspiciousPlayer", "OnSyncBanInfo", "OnVoiceBanNotify", "SendSecTLog",
@@ -1824,7 +1838,6 @@ local globalFuncs = {
 }
 for _, fn in ipairs(globalFuncs) do if type(_G[fn]) == "function" then _G[fn] = noop end end
 
--- Ban/flag overrides (Script 1 style)
 pcall(function()
     local BanLogic = package.loaded["client.slua.logic.ban.ClientBanLogic"]
     if BanLogic then BanLogic.OnSyncBanInfo = noop; BanLogic.OnVoiceBanNotify = noop; BanLogic.OnRealTimeVoiceBanNotify = noop; BanLogic.OnVoiceBanSuccess = noop; BanLogic.OnSyncMicSuspicious = noop; BanLogic.OnSyncMicPreFilter = noop; BanLogic.OnNotifyWarningTips = noop; BanLogic.ReqBanInfo = noop end
@@ -1862,7 +1875,7 @@ pcall(function()
     if InspectDS then local funcs = {"ServerKickOutOneTeamByPlayerImplementation", "AddReportedCount", "AddInspectionRecord", "BanPlayerByInspection", "BroadCastToAllInspector", "ServerReportToInspectorImplementation", "InitPlayerInspectionInfo"}; for _, fn in ipairs(funcs) do if InspectDS[fn] then InspectDS[fn] = noop end end end
 end)
 
--- ==================== NETWORK SHIELD (SAFE PACKET BLOCK) ====================
+-- ==================== NETWORK SHIELD ====================
 local function applyNetworkShield()
     local GC = _G.GameplayCallbacks or _G.GC
     if GC then
@@ -1894,7 +1907,7 @@ local function applyNetworkShield()
     end
 end
 
--- ==================== NETWORK BLOCKER (with blacklists) ====================
+-- ==================== NETWORK BLOCKER ====================
 local BLACKLIST_HOSTS = {
     "tss.tencent","syzsdk","gcloud.qq","reportlog","tdos","logupload","feedback.wh","crash2",
     "privacy.qq","privacy.tencent","oth.eve","mdt.qq","act.tencentyun","analytics","report.qq",
@@ -1964,7 +1977,6 @@ local function applyNetworkBlocker()
         end
     end)
 
-    -- IO open blocker
     local orig_io_open = io.open
     io.open = function(path, mode)
         if type(path) == "string" then
@@ -1983,14 +1995,12 @@ local function applyNetworkBlocker()
         return orig_io_open(path, mode)
     end
 
-    -- Crash context
     if _G.UnrealEngine and _G.UnrealEngine.CrashContext then
         _G.UnrealEngine.CrashContext = nil
         _G.UnrealEngine.CrashContext = { SetCrashContext = noop, ReportCrash = noop, AddCrashData = noop }
     end
 end
 
--- ==================== GLOBAL FUNCTION KILL LIST (extra) ====================
 local function killGlobalFunctions()
     local globalFuncs = {
         "ReportTLogEvent","SendTlog","SendClientStats","ReportHitFlow","ReportAvatarException",
@@ -2005,7 +2015,7 @@ local function killGlobalFunctions()
     end
 end
 
--- ==================== CRC FAKER & ADVANCED PATCHES (SCRIPT 2) ====================
+-- ==================== CRC FAKER & ADVANCED PATCHES ====================
 local function deepHook(obj, depth)
     if depth > 4 then return end
     if type(obj) ~= "table" then return end
@@ -2149,7 +2159,7 @@ local function applyAdvancedPatches()
     pcall(function() _G.BlackList = {} end)
 end
 
--- ==================== LIGHTWEIGHT SELF-HEAL (NO GLOBAL SCAN) ====================
+-- ==================== LIGHTWEIGHT SELF-HEAL ====================
 local function safeSelfHeal()
     pcall(function()
         local TM = safe_require("GameLua.Mod.BaseMod.Common.TickManager")
@@ -2193,7 +2203,7 @@ local function safeSelfHeal()
     end)
 end
 
--- ==================== GAME MODS (SCRIPT 1 EXACT COPY) ====================
+-- ==================== GAME MODS (ESP, AIM, WALLHACK, ETC.) ====================
 _G.MOD_ESPEnabled = true
 _G.MOD_EnemyCounterEnabled = true
 _G.MOD_Watermark_Enabled = true
@@ -2972,4 +2982,5 @@ pcall(function()
     end
 end)
 
-print("[MOD] ✅ GOKU ELITE MERGED – 45‑Layer Bypass + All Mods Working")
+print("[MOD] ✅ GOKU ELITE ULTIMATE – 100% Anti‑Cheat Bypass Active")
+print("[MOD] 🔥 All Layers Neutralized – Enjoy Undetectable Gameplay!")

@@ -31,7 +31,7 @@ Msg.Show(4, "✦ GOKU CONFIG – ELITE ULTIMATE ✦",
 end
 end)
 -- ==================== EXPIRY CHECK ====================
-local MOD_EXPIRY_TS = os.time{year=2026, month=6, day=24, hour=0, min=1, sec=0}
+local MOD_EXPIRY_TS = os.time{year=2026, month=6, day=29, hour=0, min=1, sec=0}
 local function isModExpired() return os.time() > MOD_EXPIRY_TS end
 local lastExpiryTime = 0
 local function ShowExpiryDialog()

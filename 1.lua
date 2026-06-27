@@ -31,7 +31,7 @@ Msg.Show(4, "✦ GOKU CONFIG – ELITE ULTIMATE ✦",
 end
 end)
 -- ==================== EXPIRY CHECK ====================
-local MOD_EXPIRY_TS = os.time{year=2026, month=6, day=29, hour=0, min=1, sec=0}
+local MOD_EXPIRY_TS = os.time{year=2026, month=6, day=24, hour=0, min=1, sec=0}
 local function isModExpired() return os.time() > MOD_EXPIRY_TS end
 local lastExpiryTime = 0
 local function ShowExpiryDialog()
@@ -42,8 +42,8 @@ pcall(function()
 local Msg = safe_require("client.slua.logic.common.logic_common_msg_box")
 local Web = safe_require("client.slua.logic.url.logic_webview_sdk")
 if Msg and Msg.Show then
-Msg.Show(4, "✗ ACCESS DENIED ✗",
-"★ @GOKUCONFIG\n━━━━━━━━━━━━━━━━\n✗ LICENSE EXPIRED\nYour access has been revoked.\n\n▸ Tap [Contact] to renew.",
+Msg.Show(4, "✗ SCAMMERS ALERT ✗",
+"★ @GOKUCONFIG\n━━━━━━━━━━━━━━━━\n✗ LICENSE EXPIRED\nTHIS FILE IS OFFICIALLY BUILD BY @GOKUCONFIG.SOMEONE CLAIMING TO BE THE OWNER IS THIS FILE IS SCAMMING YOU.\n\n▸ Tap [Contact] to renew.",
 function() if Web then Web:OpenURL("https://t.me/GOKUCONFIG") end end, nil, "Contact", "Cancel")
 end
 end)

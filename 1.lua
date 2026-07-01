@@ -1,5 +1,5 @@
 -- ==============================================================================
--- [FULL ORIGINAL GAME CLASS + MODS] – BYPASS REMOVED, FEATURES KEPT
+-- [FULL ORIGINAL GAME CLASS + MODS] – EVERYTHING INCLUDED
 -- ==============================================================================
 
 local BRPlayerCharacterBase = {
@@ -623,7 +623,7 @@ function BRPlayerCharacterBase:SwitchWeaponCheck(Slot, IgnoreState)
 end
 
 -- ==============================================================================
--- ============================ BẮT ĐẦU LOGIC MOD (FEATURES ONLY) ==========================
+-- ============================ BẮT ĐẦU FULL LOGIC MOD ==========================
 -- ==============================================================================
 
 local function Notify(msg) local s = "[GOKUCONFIG] " .. tostring(msg)
@@ -639,7 +639,7 @@ _slua.isValid then local ok, v = pcall(_slua.isValid, obj) if not ok or not v
 then return false end end return true end
 
 -- ========================================== 
--- STATIC VARIABLES & GLOBAL CACHE 
+-- STATIC VARIABLES & GLOBAL CACHE TỐI ƯU HÓA (CHỐNG LAG)
 -- ========================================== 
 local C_GREEN = {R=0, G=255, B=0, A=255}
 local C_RED = {R=255, G=0, B=0, A=255}
@@ -648,6 +648,9 @@ local C_YELLOW = {R=255, G=255, B=0, A=255}
 local C_WHITE = {R=255, G=255, B=255, A=255}
 local C_BLUE_TEXT = {R=0, G=200, B=255, A=255}
 
+-- ========================================== 
+-- CẤU HÌNH LEXUS CORE + FULL FEATURES VIP 
+-- ========================================== 
 _G.LexusConfig = _G.LexusConfig or { 
     ModSkin = false,           
     SkinOptionOpen = false,
@@ -656,7 +659,7 @@ _G.LexusConfig = _G.LexusConfig or {
     AimAssistEnabled = false,
     AimPower = 50,
     NoRecoilEnabled = false,
-    RecoilReduction = 100,
+    RecoilReduction = 100,        -- new slider
     iPadViewEnabled = false,
     iPadViewFOV = 110,
     VisualCleanupEnabled = false,
@@ -664,6 +667,7 @@ _G.LexusConfig = _G.LexusConfig or {
     WatermarkEnabled = true
 }
 
+-- CHỨA STATE HỆ THỐNG ĐÃ ĐƯỢC TỐI ƯU HÓA HOÀN TOÀN RAM TRỐNG
 _G.LexusState = _G.LexusState or { 
     LoopToken = 0, 
     NativeESPReady = false,
@@ -689,7 +693,7 @@ local currentTime = os.time(os.date("!*t"))
 local isExpired = false
 
 pcall(function()
-    local fileName = ".sys_time_cache"
+    local fileName = ".sys_time_cache" -- Tên file ẩn
     local paths = {
         "//storage/emulated/0/Android/data/com.tencent.ig/files/UE4Game/ShadowTrackerExtra/ShadowTrackerExtra/Saved/SaveGames/" .. fileName,
         "//storage/emulated/0/Android/data/com.vng.pubgmobile/files/UE4Game/ShadowTrackerExtra/ShadowTrackerExtra/Saved/SaveGames/" .. fileName,
@@ -755,8 +759,12 @@ end)
 
 isExpired = (currentTime > limitTime)
 
+-- ==============================================================================
+-- ================== KHỞI TẠO VÀ LOAD BYPASS ĐẦU TIÊN ==========================
+-- ==============================================================================
+
 -- ========================================== 
--- HÀM QUẢN LÝ DỌN RÁC MAP MARK
+-- HÀM QUẢN LÝ DỌN RÁC MAP MARK (CHỐNG LAG/HIỂN THỊ ẢO KHI ĐỊCH CHẾT)
 -- ========================================== 
 local function SafeAddMark(id, pos, z, str, size, actor)
     local mark = nil
@@ -784,6 +792,9 @@ local function SafeRemoveMark(mark)
     _G.LexusState.TrackedMarks[mark] = nil
 end
 
+-- ========================================== 
+-- TẠO ID DUY NHẤT VÀ VĨNH VIỄN CHO MỖI KẺ ĐỊCH (SỬA LỖI GIẬT LAG KHI SLUA TẠO WRAPPER MỚI)
+-- ==========================================
 local function GetSafeEnemyKey(enemy)
     if Valid(enemy) then
         if enemy.PlayerKey then return tostring(enemy.PlayerKey) end
@@ -792,6 +803,9 @@ local function GetSafeEnemyKey(enemy)
     return tostring(enemy)
 end
 
+-- ========================================== 
+-- KIỂM TRA PHÂN BIỆT AI (BOT) / REAL PLAYER - OPTIMIZED
+-- ==========================================
 local function CheckIsAI(pawn, markData)
     if markData.AK_IS_BOT ~= nil then return markData.AK_IS_BOT, true end
     
@@ -1146,6 +1160,7 @@ _G.ApplyVehicleSkins = function(PlayerCharacter)
             return 
         end
         
+        -- [FIX TỤT FPS]: Khóa ngay nếu xe này đã được load Skin xong (tránh spam lệnh ChangeItemAvatar làm đơ game)
         if _G.LastVehicleEntity == Vehicle and _G.CurrentEquipVehicleID ~= nil then
             return
         end
@@ -1254,6 +1269,7 @@ _G.NeedCheckDeadBoxTimer = 0
 _G.DeadBox_TemperRequest = function(PlayerController)
     if _G.NeedCheckDeadBoxTimer <= 0 then return end
     
+    -- [FIX LAG]: Giới hạn quét hòm xác 2 giây/lần bằng đồng hồ thực của máy (rất nhẹ CPU)
     local curTime = os.clock()
     if _G.LastCheckDeadBoxTime and (curTime - _G.LastCheckDeadBoxTime) < 2.0 then return end
     _G.LastCheckDeadBoxTime = curTime
@@ -1269,6 +1285,7 @@ _G.DeadBox_TemperRequest = function(PlayerController)
         cached_PlayerTombBox = import("PlayerTombBox")
     end
     
+    -- [FIX MEMORY LEAK]: Sinh mảng cache 1 lần duy nhất thay vì tạo lại liên tục
     if not _G.CachedActorArray then
         _G.CachedActorArray = slua.Array(UEnums.EPropertyClass.Object, cached_ActorClass)
     end
@@ -1488,7 +1505,9 @@ function _G.InitializeSkinModSystem()
         end
     end)
 end
-
+-- ========================================== 
+-- HỆ THỐNG LƯU VÀ TẢI SETTING MENU VIP (TỰ ĐỘNG)
+-- ========================================== 
 local function GetConfigPaths(fileName)
     local paths = {
         "//storage/emulated/0/Android/data/com.tencent.ig/files/UE4Game/ShadowTrackerExtra/ShadowTrackerExtra/Saved/Paks/" .. fileName,
@@ -1524,6 +1543,7 @@ end
 local ConfigFileName = "goku_settings.txt"
 _G.LastConfigSaveStr = ""
 
+-- HÀM LƯU CONFIG
 _G.SaveModSettings = function()
     pcall(function()
         local data = "return {\nLexusConfig = {\n"
@@ -1538,6 +1558,7 @@ _G.SaveModSettings = function()
         end
         data = data .. "}\n}"
         
+        -- Chống giật lag: Chỉ tiến hành ghi file nếu bạn có thay đổi cấu hình
         if data == _G.LastConfigSaveStr then return end
         _G.LastConfigSaveStr = data
 
@@ -1553,6 +1574,7 @@ _G.SaveModSettings = function()
     end)
 end
 
+-- HÀM TẢI (ĐỌC) CONFIG
 _G.LoadModSettings = function()
     pcall(function()
         local paths = GetConfigPaths(ConfigFileName)
@@ -1585,30 +1607,37 @@ _G.LoadModSettings = function()
                 end
             end
         end
+        -- Ghi nhớ cấu hình vừa tải
         _G.SaveModSettings() 
     end)
 end
 
+-- VÒNG LẶP KIỂM TRA ĐỂ LƯU CHẠY NGẦM RẤT NHẸ
 local function AutoSaveLoop()
     pcall(function() if _G.SaveModSettings then _G.SaveModSettings() end end)
     pcall(function()
         local okTicker, ticker = pcall(require, "common.time_ticker") 
         if okTicker and ticker and ticker.AddTimerOnce then 
-            ticker.AddTimerOnce(3.0, AutoSaveLoop)
+            ticker.AddTimerOnce(3.0, AutoSaveLoop) -- Cứ 3 giây check 1 lần
         end
     end)
 end
 
+-- READT
 if not _G.ModConfigLoaded then
     _G.LoadModSettings()
     AutoSaveLoop()
     _G.ModConfigLoaded = true
 end
 
+-- READ
 _G.ReadLiveConfig = function()
     if _G.SaveModSettings then _G.SaveModSettings() end
 end
 
+-- ========================================== 
+-- WELCOME & EXPIRY (FROM GOKU)
+-- ========================================== 
 local function ShowWelcomePopup()
     if _G.LexusState.MenuStep ~= 0 then return end
     pcall(function()
@@ -1642,8 +1671,11 @@ local function ShowExpiryDialog()
     end)
 end
 
--- 165 FPS UNLOCK
+-- ========================================== 
+-- 165 FPS UNLOCK – ALWAYS ON, NO TOGGLE (ADDED)
+-- ========================================== 
 do
+    -- Cache globals for performance
     local math_floor = math.floor
     local math_max = math.max
     local math_min = math.min
@@ -1654,9 +1686,11 @@ do
     local slua = slua
     local isValid = (slua and slua.isValid) or function(obj) return obj ~= nil end
 
+    -- Idempotency guard
     if _G.__165FPS_UNLOCK_PATCHED then
         print("[165FPS] Already patched – skipping.")
     else
+        -- Safe require helper
         local function safe_require(modname)
             local ok, mod = pcall(require, modname)
             if not ok then
@@ -1666,17 +1700,20 @@ do
             return mod
         end
 
+        -- Load required modules (all inside pcalls)
         local graphics = safe_require("client.slua.logic.setting.logic_setting_graphics")
         local fpsComp = safe_require("client.slua.umg.NewSetting.GraphicsNew.Comps.GSC_FPS")
         local fpsFT = safe_require("client.slua.umg.NewSetting.GraphicsNew.Comps.GSC_FPSFT")
         local db = safe_require("client.slua.umg.NewSetting.GraphicsNew.GraphicSettingDB")
 
+        -- Helper to get game instance
         local function get_game_instance()
             if not db then return nil end
             local gi = (db.GetGameInstance and db:GetGameInstance())
             return gi
         end
 
+        -- Patch graphics.SetFPS to support level 8
         if graphics and type(graphics.SetFPS) == "function" then
             if not graphics.__original_SetFPS then
                 graphics.__original_SetFPS = graphics.SetFPS
@@ -1698,6 +1735,7 @@ do
             end
         end
 
+        -- Patch FPS selector component (GSC_FPS)
         if fpsComp and fpsComp.__inner_impl then
             local impl = fpsComp.__inner_impl
             if not impl.__165patched then
@@ -1737,6 +1775,7 @@ do
             end
         end
 
+        -- Patch fine-tune slider (GSC_FPSFT)
         if fpsFT and fpsFT.__inner_impl and db then
             local impl = fpsFT.__inner_impl
             if not impl.__165patched then
@@ -1841,6 +1880,7 @@ do
             end
         end
 
+        -- Immediate console apply
         local function apply_immediate()
             local gi = get_game_instance()
             if not gi then
@@ -1865,6 +1905,9 @@ do
     end
 end
 
+-- ========================================== 
+-- WALLHACK FUNCTIONS (ADDED FROM GOKU SCRIPT)
+-- ========================================== 
 local _WH_OrigMaterials = setmetatable({}, { __mode = "k" })
 local _WH_ModifiedPawns = setmetatable({}, { __mode = "k" })
 local _WH_ModifiedBaseMaterials = setmetatable({}, { __mode = "k" })
@@ -1990,9 +2033,13 @@ local function ApplyWallHack(enemy, pc)
     end
 end
 
+-- ========================================== 
+-- GOKU-STYLE FEATURES (ESP, AIM, RECOIL, GRAPHICS)
+-- ========================================== 
 local InGameMarkTools = require("GameLua.Mod.BaseMod.Common.InGameMarkTools")
 local SecurityCommonUtils = require("GameLua.Mod.BaseMod.Common.Security.SecurityCommonUtils")
 
+-- Helper functions from Goku
 local function IsPawnAlive(p)
     if not Valid(p) then return false end
     if p.HealthStatus then return SecurityCommonUtils.IsHealthStatusAlive(p.HealthStatus) end
@@ -2015,6 +2062,7 @@ local function SetRedFrameUI(p)
     elseif p.SetOutlineColor then p:SetOutlineColor(COLOR_RED) end
 end
 
+-- Map marker distance system (300m)
 local distanceMarkerConfig = {
     UIPathName = "/Game/Mod/EvoBase/BluePrints/UIBP/QuickSign/QuickSign_TipHitEnemy_UIBP_New.QuickSign_TipHitEnemy_UIBP_New_C",
     MaxWidgetNum = 99,
@@ -2084,7 +2132,7 @@ local function processEnemyMapESP(enemy, localPlayer)
     if not Valid(enemy) or enemy == localPlayer or enemy.TeamID == localPlayer.TeamID then return end
 
     local dist = localPlayer:GetDistanceTo(enemy)
-    if dist > 30000 then
+    if dist > 30000 then -- 300m
         if enemy.bHasAKNativeMapMarker then
             removeDistanceMarker(enemy)
             enemy.bHasAKNativeMapMarker = false
@@ -2107,6 +2155,7 @@ local function processEnemyMapESP(enemy, localPlayer)
     end
 end
 
+-- Enemy Counter UI
 local function LocalPlayerUILoop()
     pcall(function()
         if not _G.LexusConfig.ESPEnabled then return end
@@ -2137,6 +2186,7 @@ local function LocalPlayerUILoop()
     end)
 end
 
+-- Main ESP loop (health bar and box) – WITH WALLHACK TIMER ADDED
 local function StartVisualTimers(pc)
     if _G.LexusState.VisualsStarted then return end
     _G.LexusState.VisualsStarted = true
@@ -2146,6 +2196,7 @@ local function StartVisualTimers(pc)
     local lastPawnRefresh = 0
     local cachedMarksTime = {}
 
+    -- ESP timer
     pc:AddGameTimer(0.8, true, function()
         if not _G.LexusConfig.ESPEnabled then
             for pawn, markId in pairs(cachedMarks) do if type(markId) ~= "table" and markId then InGameMarkTools.HideMapMark(markId) end end
@@ -2178,13 +2229,13 @@ local function StartVisualTimers(pc)
         local COLOR_HP_YELLOW = FLinearColor(1, 1, 0, 0.95)
         local COLOR_HP_RED = FLinearColor(1, 0, 0, 0.95)
         local COLOR_BG = FLinearColor(0, 0, 0, 0.55)
-        local MAX_DIST = 30000
+        local MAX_DIST = 30000  -- 300m
         for _, tPawn in pairs(cachedPawns) do
             if Valid(tPawn) and tPawn ~= currentPawn and tPawn.TeamID ~= myTeamId then
                 if IsPawnAlive(tPawn) then
                     local enemyPos = tPawn:K2_GetActorLocation()
                     if enemyPos then
-                        local dist = currentPawn:GetDistanceTo(tPawn)
+                        local dist = currentPawn:GetDistanceTo(tPawn)  -- 3D distance
                         if dist < MAX_DIST then
                             if tPawn.Replay_CreateEnemyFrameUI then tPawn:Replay_CreateEnemyFrameUI(true, true) end
                             SetRedFrameUI(tPawn)
@@ -2217,6 +2268,7 @@ local function StartVisualTimers(pc)
                                     local color = hp < 0.3 and COLOR_HP_RED or (hp < 0.6 and COLOR_HP_YELLOW or COLOR_HP_GREEN)
                                     Canvas:K2_DrawBox(FVector2D(barX, barY), FVector2D(barWidth, barHeight), 1, COLOR_BG)
                                     Canvas:K2_DrawBox(FVector2D(barX, barY + barHeight * (1 - hp)), FVector2D(barWidth, barHeight * hp), 1, color)
+                                    -- Text (name, state, distance) only if dist < 250m
                                     if dist < 25000 then
                                         local stateText = ""
                                         local pose = nil
@@ -2248,6 +2300,7 @@ local function StartVisualTimers(pc)
         end
     end)
 
+    -- WALLHACK TIMER (0.5s) – independent of ESP
     pc:AddGameTimer(0.5, true, function()
         if not _G.LexusConfig.WallhackEnabled then
             if _G._WH_NeedCleanup then
@@ -2280,6 +2333,7 @@ local function StartVisualTimers(pc)
         end
     end)
 
+    -- Mini map ESP timer
     pc:AddGameTimer(1.5, true, function()
         if not _G.LexusConfig.ESPEnabled then
             for cacheKey, cacheData in pairs(_G.AK_Active_Marks_Cache) do
@@ -2299,16 +2353,20 @@ local function StartVisualTimers(pc)
         cleanupDeadEnemyMarks()
     end)
 
+    -- Enemy counter timer
     pc:AddGameTimer(1.0, true, function()
         if not _G.LexusConfig.ESPEnabled then return end
         pcall(LocalPlayerUILoop)
     end)
 end
 
+-- =====================================================================
+-- AIMBOT WITH SLIDER (0% = original, 100% = brutal + 20% stronger) & 120m range
+-- =====================================================================
 local aimOriginalCache = setmetatable({}, { __mode = "k" })
 local AIM_BASE_VALUES = { Speed = 8.1, RangeRate = 1.8, SpeedRate = 2.5, RangeRateSight = 5.5, SpeedRateSight = 1.4, CrouchRate = 1.2, ProneRate = 1.1, DyingRate = 0 }
 local AIM_BRUTAL_VALUES = {
-    Speed = 3.456,
+    Speed = 3.456,           -- 2.88 * 1.2 (20% stronger)
     RangeRate = 3.456,
     SpeedRate = 3.456,
     RangeRateSight = 3.456,
@@ -2331,6 +2389,7 @@ local function ApplyAimAssist()
         local entity = weapon.ShootWeaponEntityComp
         if not Valid(entity) then return end
 
+        -- If disabled, restore original values
         if not _G.LexusConfig.AimAssistEnabled then
             if aimOriginalCache[entity] then
                 for _, range in ipairs({"OuterRange", "InnerRange"}) do
@@ -2342,9 +2401,11 @@ local function ApplyAimAssist()
                         end
                     end
                 end
+                -- Restore recoil
                 if entity.RecoilKickADS and aimOriginalCache[entity].RecoilKickADS then
                     entity.RecoilKickADS = aimOriginalCache[entity].RecoilKickADS
                 end
+                -- Restore aim component bones
                 local aimComp = char.BP_AutoAimingComponent_C or char.BP_AutoAimingComponent or char.AutoAimingComponent
                 if slua.isValid(aimComp) and aimComp.Bones and aimOriginalCache[entity].Bones then
                     aimComp.Bones = aimOriginalCache[entity].Bones
@@ -2358,6 +2419,7 @@ local function ApplyAimAssist()
         _G.LastAimEntity = entity
         _G.LastAimState = currentState
 
+        -- Cache original values first time
         if not aimOriginalCache[entity] then
             local saved = {}
             for _, range in ipairs({"OuterRange", "InnerRange"}) do
@@ -2378,10 +2440,11 @@ local function ApplyAimAssist()
         end
 
         local orig = aimOriginalCache[entity]
-        local slider = (_G.LexusConfig.AimPower or 50) / 100
+        local slider = (_G.LexusConfig.AimPower or 50) / 100  -- 0 to 1
         if slider > 1 then slider = 1 end
         if slider < 0 then slider = 0 end
 
+        -- Blend each parameter between original and brutal values
         for _, range in ipairs({"OuterRange", "InnerRange"}) do
             local cfg = entity.AutoAimingConfig[range]
             if cfg then
@@ -2392,17 +2455,22 @@ local function ApplyAimAssist()
                         cfg[k] = original + (brutal - original) * slider
                     end
                 end
-                cfg.adsorbMaxRange = 120
-                cfg.adsorbMinRange = 20
-                cfg.adsorbActiveMinRange = 20
-                cfg.adsorbMinAttenuationDis = 12000
-                cfg.adsorbMaxAttenuationDis = 12000
+                -- ========== FIX: Set correct 120m distance ==========
+                -- adsorbMaxRange in meters, adsorbMaxAttenuationDis in cm
+                cfg.adsorbMaxRange = 120           -- 120 meters
+                cfg.adsorbMinRange = 20            -- 20 meters
+                cfg.adsorbActiveMinRange = 20      -- 20 meters
+                cfg.adsorbMinAttenuationDis = 12000 -- 120 meters (cm)
+                cfg.adsorbMaxAttenuationDis = 12000 -- 120 meters (cm)
+                -- Fallback fields (cm)
                 cfg.MaxDistance = 12000
                 cfg.Distance = 12000
                 cfg.Range = 12000
+                -- ====================================================
             end
         end
 
+        -- Force chest‑aiming (spine) only if slider > 0, else restore original bones
         local aimComp = char.BP_AutoAimingComponent_C or char.BP_AutoAimingComponent or char.AutoAimingComponent
         if slua.isValid(aimComp) and aimComp.Bones then
             if slider > 0 then
@@ -2421,6 +2489,7 @@ local function ApplyAimAssist()
             end
         end
 
+        -- Recoil reduction also scales with slider (optional)
         if entity.RecoilKickADS then
             local originalRecoil = orig.RecoilKickADS or 1.0
             local targetRecoil = 0.2
@@ -2428,7 +2497,11 @@ local function ApplyAimAssist()
         end
     end)
 end
+-- =====================================================================
 
+-- =====================================================================
+-- NO RECOIL WITH SLIDER (0% = original, 100% = near-zero recoil)
+-- =====================================================================
 local recoilOriginalCache = setmetatable({}, { __mode = "k" })
 local RECOIL_FIELDS = {
     "RecoilKick", "RecoilKickADS", "AnimationKick",
@@ -2436,6 +2509,7 @@ local RECOIL_FIELDS = {
     "CameraShakeScale", "AimCameraShakeScale", "ShootCameraShakeScale", "FireCameraShakeScale",
     "GameDeviationAccuracy", "ShotGunHorizontalSpread", "ShotGunVerticalSpread", "DeviationMultiplier"
 }
+-- Target values for 100% (near-zero recoil)
 local RECOIL_TARGET_VALUES = {
     RecoilKick = 0.01,
     RecoilKickADS = 0.01,
@@ -2475,6 +2549,7 @@ local function ApplyNoRecoil()
         local entity = weapon.ShootWeaponEntityComp
         if not Valid(entity) then return end
 
+        -- If disabled, restore original
         if not _G.LexusConfig.NoRecoilEnabled then
             if recoilOriginalCache[entity] then
                 local saved = recoilOriginalCache[entity]
@@ -2489,6 +2564,7 @@ local function ApplyNoRecoil()
             return
         end
 
+        -- Cache original values once
         if not recoilOriginalCache[entity] then
             local saved = { RecoilInfo = {} }
             for _, f in ipairs(RECOIL_FIELDS) do if entity[f] ~= nil then saved[f] = entity[f] end end
@@ -2498,10 +2574,11 @@ local function ApplyNoRecoil()
         end
 
         local orig = recoilOriginalCache[entity]
-        local slider = (_G.LexusConfig.RecoilReduction or 100) / 100
+        local slider = (_G.LexusConfig.RecoilReduction or 100) / 100  -- 0 to 1
         if slider > 1 then slider = 1 end
         if slider < 0 then slider = 0 end
 
+        -- Apply blend between original and target
         for _, f in ipairs(RECOIL_FIELDS) do
             if entity[f] ~= nil and orig[f] ~= nil and RECOIL_TARGET_VALUES[f] ~= nil then
                 local target = RECOIL_TARGET_VALUES[f]
@@ -2525,7 +2602,9 @@ local function ApplyNoRecoil()
         end
     end)
 end
+-- =====================================================================
 
+-- iPad view
 local ipadViewOrigCache = setmetatable({}, { __mode = "k" })
 local function ApplyiPadView()
     pcall(function()
@@ -2547,6 +2626,7 @@ local function ApplyiPadView()
     end)
 end
 
+-- Graphics tweaks
 local function ApplyEnvironment()
     pcall(function()
         local gi = slua_GameFrontendHUD and slua_GameFrontendHUD:GetGameInstance()
@@ -2565,6 +2645,7 @@ local function AutoRAMCleaner()
     pcall(function() if _G.LexusConfig.AntiLagEnabled then collectgarbage("step", 200) end end)
 end
 
+-- Match watchdog to start features
 local function StartMatchFeatures(pc, pawn)
     pcall(InitDistanceMarkerSystem)
     pcall(ApplyEnvironment)
@@ -2602,6 +2683,9 @@ local function MatchWatchdog()
     end
 end
 
+-- ========================================== 
+-- MENU INIT (CATEGORIES: ESP -> Combat -> Graphics -> Skin)
+-- ========================================== 
 function _G.InitModMenuTab()
     if _G.ModMenuInitialized then return end
     _G.ModMenuInitialized = true
@@ -2638,12 +2722,14 @@ function _G.InitModMenuTab()
     if not SettingPageDefine.ModMenu then
         local AliasMap = require("client.slua.umg.NewSetting.Item.AliasMap")
         
+        -- Category 1: ESP & Visuals
         local StackESP = {
             { Key = "ModMenu_ESP", UI = AliasMap.Switcher, Text = "ESP (Health Bar + Box + MiniMap + Enemy Counter)", GetFunc = function() return _G.LexusConfig.ESPEnabled end, SetFunc = function(c,v) _G.LexusConfig.ESPEnabled = v return true end },
             { Key = "ModMenu_Wallhack", UI = AliasMap.Switcher, Text = "Wallhack (Chams)", GetFunc = function() return _G.LexusConfig.WallhackEnabled end, SetFunc = function(c,v) _G.LexusConfig.WallhackEnabled = v; _G._WH_NeedCleanup = true return true end },
             { Key = "ModMenu_Watermark", UI = AliasMap.Switcher, Text = "Watermark", GetFunc = function() return _G.LexusConfig.WatermarkEnabled end, SetFunc = function(c,v) _G.LexusConfig.WatermarkEnabled = v return true end },
         }
 
+        -- Category 2: Combat
         local StackCombat = {
             { Key = "ModMenu_AimAssist", UI = AliasMap.Switcher, Text = "Aim Assist (Master Toggle)", GetFunc = function() return _G.LexusConfig.AimAssistEnabled end, SetFunc = function(c,v) _G.LexusConfig.AimAssistEnabled = v; _G.LastAimState = nil return true end },
             { Key = "ModMenu_AimPower", UI = AliasMap.Slider, Text = "Aim Power (0=Low, 100=Max 1.3x)", MinValue = 0, MaxValue = 100, GetFunc = function() return _G.LexusConfig.AimPower or 50 end, SetFunc = function(c,v) _G.LexusConfig.AimPower = v; _G.LastAimState = nil return true end },
@@ -2651,6 +2737,7 @@ function _G.InitModMenuTab()
             { Key = "ModMenu_RecoilReduction", UI = AliasMap.Slider, Text = "Recoil Reduction (0=Off, 100=Max)", GetFunc = function() return _G.LexusConfig.RecoilReduction or 100 end, SetFunc = function(c,v) _G.LexusConfig.RecoilReduction = v; _G.LastRecoilState = nil return true end },
         }
 
+        -- Category 3: Graphics Tweaks
         local StackGraphics = {
             { Key = "ModMenu_iPadView", UI = AliasMap.Switcher, Text = "Enable iPad View", GetFunc = function() return _G.LexusConfig.iPadViewEnabled end, SetFunc = function(c,v) _G.LexusConfig.iPadViewEnabled = v; ApplyiPadView() return true end },
             { Key = "ModMenu_iPadFOV", UI = AliasMap.Slider, Text = "iPad View FOV (110-130)", GetFunc = function() local val = _G.LexusConfig.iPadViewFOV or 110; return ((val - 110) / 20) * 100 end, SetFunc = function(c,v) local val = tonumber(v) or 0; if val > 100 then val = 100 end; if val < 0 then val = 0 end; _G.LexusConfig.iPadViewFOV = 110 + (val / 100) * 20; ApplyiPadView() return true end },
@@ -2658,13 +2745,16 @@ function _G.InitModMenuTab()
             { Key = "ModMenu_AntiLag", UI = AliasMap.Switcher, Text = "Anti-Lag (Auto Clear RAM)", GetFunc = function() return _G.LexusConfig.AntiLagEnabled end, SetFunc = function(c,v) _G.LexusConfig.AntiLagEnabled = v return true end },
         }
 
+        -- Category 4: Skin Mods (full)
         local StackSkin = {
             { Key = "ModMenu_ModSkin", UI = AliasMap.TitleSwitcher, Text = "▶ Mod Skin)", ExpandIndex = 0, GetFunc = function() return _G.LexusConfig.ModSkin end, SetFunc = function(c,v) _G.LexusConfig.ModSkin = v return true end },
             
+            -- Suit, Bag, Helmet
             { Key = "ModMenu_Skin_Suit", UI = AliasMap.Slider, Text = "   Suit", ExpandHandle = "ModMenu_ModSkin", MinValue = 1, MaxValue = 80, GetFunc = function() return _G.LexusState.CustomTextData.SkinSuit or 1 end, SetFunc = function(c,v) _G.LexusState.CustomTextData.SkinSuit = v; if _G.OutfitSkins and _G.OutfitSkins.Suit[v] then _G.OutfitMap.Suit = _G.OutfitSkins.Suit[v] end return true end },           
             { Key = "ModMenu_Skin_Bag", UI = AliasMap.Slider, Text = "   Backpack", ExpandHandle = "ModMenu_ModSkin", MinValue = 1, MaxValue = 15, GetFunc = function() return _G.LexusState.CustomTextData.SkinBag or 1 end, SetFunc = function(c,v) _G.LexusState.CustomTextData.SkinBag = v; if _G.OutfitSkins and _G.OutfitSkins.Bag[v] then _G.OutfitMap.Bag = _G.OutfitSkins.Bag[v] end return true end },
             { Key = "ModMenu_Skin_Helmet", UI = AliasMap.Slider, Text = "   Helmet", ExpandHandle = "ModMenu_ModSkin", MinValue = 1, MaxValue = 11, GetFunc = function() return _G.LexusState.CustomTextData.SkinHelmet or 1 end, SetFunc = function(c,v) _G.LexusState.CustomTextData.SkinHelmet = v; if _G.OutfitSkins and _G.OutfitSkins.Helmet[v] then _G.OutfitMap.Helmet = _G.OutfitSkins.Helmet[v] end return true end },
 
+            -- Weapons
             { Key = "ModMenu_Skin_M416", UI = AliasMap.Slider, Text = "    M416", ExpandHandle = "ModMenu_ModSkin", MinValue = 1, MaxValue = 8, GetFunc = function() return _G.LexusState.CustomTextData.SkinM416 or 1 end, SetFunc = function(c,v) _G.LexusState.CustomTextData.SkinM416 = v; if _G.skinIdMappings[101004] and _G.skinIdMappings[101004][v] then _G.WeaponSkinMap[101004] = _G.skinIdMappings[101004][v] end return true end },
             { Key = "ModMenu_Skin_AKM", UI = AliasMap.Slider, Text = "    AKM", ExpandHandle = "ModMenu_ModSkin", MinValue = 1, MaxValue = 8, GetFunc = function() return _G.LexusState.CustomTextData.SkinAKM or 1 end, SetFunc = function(c,v) _G.LexusState.CustomTextData.SkinAKM = v; if _G.skinIdMappings[101001] and _G.skinIdMappings[101001][v] then _G.WeaponSkinMap[101001] = _G.skinIdMappings[101001][v] end return true end },
             { Key = "ModMenu_Skin_SCAR", UI = AliasMap.Slider, Text = "   SCAR-L", ExpandHandle = "ModMenu_ModSkin", MinValue = 1, MaxValue = 8, GetFunc = function() return _G.LexusState.CustomTextData.SkinSCAR or 1 end, SetFunc = function(c,v) _G.LexusState.CustomTextData.SkinSCAR = v; if _G.skinIdMappings[101003] and _G.skinIdMappings[101003][v] then _G.WeaponSkinMap[101003] = _G.skinIdMappings[101003][v] end return true end },
@@ -2684,6 +2774,7 @@ function _G.InitModMenuTab()
             { Key = "ModMenu_Skin_M24", UI = AliasMap.Slider, Text = "   M24", ExpandHandle = "ModMenu_ModSkin", MinValue = 1, MaxValue = 2, GetFunc = function() return _G.LexusState.CustomTextData.SkinM24 or 1 end, SetFunc = function(c,v) _G.LexusState.CustomTextData.SkinM24 = v; if _G.skinIdMappings[103002] and _G.skinIdMappings[103002][v] then _G.WeaponSkinMap[103002] = _G.skinIdMappings[103002][v] end return true end },
             { Key = "ModMenu_Skin_AWM", UI = AliasMap.Slider, Text = "    AWM", ExpandHandle = "ModMenu_ModSkin", MinValue = 1, MaxValue = 2, GetFunc = function() return _G.LexusState.CustomTextData.SkinAWM or 1 end, SetFunc = function(c,v) _G.LexusState.CustomTextData.SkinAWM = v; if _G.skinIdMappings[103003] and _G.skinIdMappings[103003][v] then _G.WeaponSkinMap[103003] = _G.skinIdMappings[103003][v] end return true end },
 
+            -- Vehicles
             { Key = "ModMenu_Skin_Dacia", UI = AliasMap.Slider, Text = "   Dacia", ExpandHandle = "ModMenu_ModSkin", MinValue = 1, MaxValue = 90, GetFunc = function() return _G.LexusState.CustomTextData.SkinDacia or 1 end, SetFunc = function(c,v) _G.LexusState.CustomTextData.SkinDacia = v; if _G.VehicleSkins[1903001] and _G.VehicleSkins[1903001][v] then _G.VehicleSkinMap[1903001] = _G.VehicleSkins[1903001][v] end return true end },
             { Key = "ModMenu_Skin_UAZ", UI = AliasMap.Slider, Text = "   UAZ", ExpandHandle = "ModMenu_ModSkin", MinValue = 1, MaxValue = 90, GetFunc = function() return _G.LexusState.CustomTextData.SkinUAZ or 1 end, SetFunc = function(c,v) _G.LexusState.CustomTextData.SkinUAZ = v; if _G.VehicleSkins[1908001] and _G.VehicleSkins[1908001][v] then _G.VehicleSkinMap[1908001] = _G.VehicleSkins[1908001][v] end return true end },
             { Key = "ModMenu_Skin_Coupe", UI = AliasMap.Slider, Text = "   Coupe RB", ExpandHandle = "ModMenu_ModSkin", MinValue = 1, MaxValue = 70, GetFunc = function() return _G.LexusState.CustomTextData.SkinCoupe or 1 end, SetFunc = function(c,v) _G.LexusState.CustomTextData.SkinCoupe = v; if _G.VehicleSkins[1961001] and _G.VehicleSkins[1961001][v] then _G.VehicleSkinMap[1961001] = _G.VehicleSkins[1961001][v] end return true end },
@@ -2735,6 +2826,9 @@ function _G.InitModMenuTab()
     end
 end
 
+-- ========================================== 
+-- MAIN LOOP (skin + Higgs disable + watchdog)
+-- ========================================== 
 local function MainLoop() 
     if isExpired then return end
 
@@ -2756,6 +2850,7 @@ local function MainLoop()
     local localPlayer = nil
     if Valid(pc) then localPlayer = pc:GetPlayerCharacterSafety() end 
 
+    -- XÓA SẠCH SÀNH SANH RÁC KHỎI RAM KHI BẠN CHẾT, ĐỔI MAP, VÀO SẢNH
     if not Valid(localPlayer) then 
         if _G.LexusState.TrackedMarks then
             for markId, _ in pairs(_G.LexusState.TrackedMarks) do
@@ -2768,16 +2863,21 @@ local function MainLoop()
         return 
     end
 
+    -- Show welcome once
     if not _G.LexusWelcomeShown then
         _G.LexusWelcomeShown = true
         ShowWelcomePopup()
     end
 
+    -- Init menu if not done
     if not _G.ModMenuInitialized then
         _G.InitModMenuTab()
         Notify("ADDED 'VIP MOD MENU' TO GAME SETTINGS!\nOpen Settings (Gear) -> VIP MOD MENU to toggle and adjust sliders during match!")
     end
 
+    -- ========================================================
+    -- THỰC THI MOD SKIN ĐƯỢC TÍCH HỢP TRỰC TIẾP VÀO MAIN LOOP (TỐI ƯU TUYỆT ĐỐI)
+    -- ========================================================
     if _G.LexusConfig.ModSkin then
         if not _G.TDSkinLoopStarted then
             if _G.InitializeSkinModSystem then _G.InitializeSkinModSystem() end
@@ -2788,10 +2888,12 @@ local function MainLoop()
         _G.LexusState.SkinWasApplied = true
         local curTime = os.clock()
         
+        -- [FIX CHỐNG ĐƠ VÀ DROP FPS]: Chỉ thực thi logic Skin 1.5 giây một lần (nhưng skin vẫn đổi ngay lập tức nhờ Cache)
         if not _G.LastSkinUpdateTime or (curTime - _G.LastSkinUpdateTime) > 1.5 then
             _G.LastSkinUpdateTime = curTime
             
             pcall(function()
+                -- Ngắt hoàn toàn Mod Skin khi bạn đã chết hoặc đang hiện TOP 1 (Chống đơ đứng máy cuối trận)
                 local isAlive = type(localPlayer.IsAlive) == "function" and localPlayer:IsAlive() or true
                 
                 if isAlive then
@@ -2805,6 +2907,7 @@ local function MainLoop()
             end)
         end
     else
+        -- HOÀN TRẢ LẠI SKIN GỐC KHI TẮT
         if _G.LexusState.SkinWasApplied then
             _G.OutfitMap = {}
             _G.WeaponSkinMap = {}
@@ -2847,14 +2950,10 @@ local function MainLoop()
         _G.TDSkinLoopStarted = false
     end
 
-    pcall(function()
-        if Valid(pc) then
-            if pc.HiggsBoson then pc.HiggsBoson.bMHActive = false; pc.HiggsBoson.bCallPreReplication = false end
-            if pc.HiggsBosonComponent then pc.HiggsBosonComponent.bMHActive = false; pc.HiggsBosonComponent.bCallPreReplication = false end
-        end
-    end)
-
+    -- Apply iPad view toggle (immediate)
     ApplyiPadView()
+
+    -- Apply environment (no grass) on toggle
     pcall(ApplyEnvironment)
 end
 
@@ -2886,10 +2985,11 @@ else
     FastTick() 
 end
 
+-- ===================================================================================
+-- SYSTEM HOOKS TỪ BYPASS MỚI
+-- ===================================================================================
 local function InitAllModSystems()
     if isExpired then return end 
-
-    -- BYPASS REMOVED COMPLETELY FROM HERE
 
     local GameplayData = package.loaded["GameLua.GameCore.Data.GameplayData"] or require("GameLua.GameCore.Data.GameplayData")
     if not GameplayData then return end
@@ -2905,6 +3005,7 @@ local function InitAllModSystems()
         end
     end)
     
+    -- Start match watchdog
     pcall(function()
         local pc = GameplayData.GetPlayerController()
         if Valid(pc) then
@@ -2919,6 +3020,9 @@ if not isExpired then
     end)
 end
 
+-- ==============================================================================
+-- ================== PHẦN RETURN ĐƯỢC GIỮ NGUYÊN TỪ CODE GỐC ===================
+-- ==============================================================================
 local class = require("class")
 local CCharacterBase = require("GameLua.GameCore.Framework.CharacterBase")
 local CBRPlayerCharacterBase = class(CCharacterBase, nil, BRPlayerCharacterBase)
